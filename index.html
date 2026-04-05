@@ -3,7 +3,12 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>提出物クエスト RPG版</title>
+  <title>提出RPG</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+  <script src="https://unpkg.com/html5-qrcode"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
   <style>
     :root {
       --bg-night: #0b1020;
@@ -25,6 +30,7 @@
 
     * { box-sizing: border-box; }
     html, body { margin: 0; min-height: 100%; }
+
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", "Noto Sans JP", sans-serif;
       color: #eef2ff;
@@ -32,1212 +38,967 @@
         radial-gradient(circle at 20% 10%, rgba(124,58,237,.26), transparent 24%),
         radial-gradient(circle at 80% 10%, rgba(59,130,246,.24), transparent 25%),
         linear-gradient(180deg, #0b1020 0%, #0f172a 45%, #111827 100%);
+      padding: 20px;
     }
+
     .mode-switch {
-      position: sticky;
-      top: 0;
-      z-index: 50;
       display: flex;
-      justify-content: center;
       gap: 10px;
-      padding: 12px;
-      backdrop-filter: blur(12px);
-      background: rgba(5, 10, 24, 0.45);
-      border-bottom: 1px solid rgba(255,255,255,.08);
+      flex-wrap: wrap;
+      margin-top: 12px;
     }
-    .mode-btn {
-      border: 1px solid rgba(255,255,255,.14);
+
+    .app {
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    .hero {
+      background: linear-gradient(135deg, rgba(79,70,229,.35), rgba(15,23,42,.65));
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 28px;
+      padding: 22px;
+      box-shadow: var(--shadow);
+      margin-bottom: 16px;
+    }
+
+    .hero h1 {
+      margin: 0 0 8px;
+      font-size: 32px;
+      color: #fff7d6;
+    }
+
+    .hero p {
+      margin: 0;
+      color: #f8fafc;
+      line-height: 1.8;
+      font-size: 15px;
+    }
+
+    .section {
+      background: var(--bg-panel);
+      border: 1px solid rgba(255,255,255,.10);
+      border-radius: 22px;
+      padding: 18px;
+      box-shadow: var(--shadow);
+      margin-bottom: 16px;
+      backdrop-filter: blur(8px);
+    }
+
+    .section h2 {
+      margin: 0 0 12px;
+      color: #fff7d6;
+      font-size: 22px;
+    }
+
+    .notice {
+      color: #e5edff;
+      font-size: 14px;
+      line-height: 1.8;
+    }
+
+    .row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    input {
+      flex: 1;
+      min-width: 220px;
+      padding: 12px 14px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.18);
       background: rgba(255,255,255,.08);
       color: #fff;
-      padding: 11px 18px;
-      border-radius: 999px;
-      font-weight: 800;
+      font-size: 16px;
+      outline: none;
+    }
+
+    input::placeholder {
+      color: #dbeafe;
+    }
+
+    button {
+      border: none;
+      border-radius: 14px;
+      padding: 11px 15px;
+      font-size: 15px;
+      font-weight: 700;
       cursor: pointer;
+      color: #fff;
+      transition: transform .15s ease, opacity .15s ease;
     }
-    .mode-btn.active {
-      background: linear-gradient(135deg, rgba(79,70,229,.95), rgba(124,58,237,.95));
-      border-color: transparent;
-      box-shadow: 0 8px 24px rgba(79,70,229,.35);
+
+    button:hover {
+      transform: translateY(-1px);
+      opacity: .96;
     }
-    .screen { display: none; }
-    .screen.active { display: block; }
-    .app {
-      width: min(1240px, calc(100% - 24px));
-      margin: 18px auto 32px;
+
+    .btn-primary {
+      background: linear-gradient(135deg, #2563eb, #1d4ed8);
+    }
+
+    .btn-secondary {
+      background: linear-gradient(135deg, #64748b, #475569);
+    }
+
+    .btn-danger {
+      background: linear-gradient(135deg, #ef4444, #be123c);
+    }
+
+    #reader {
+      width: 340px;
+      max-width: 100%;
+      margin: 0 auto;
+      overflow: hidden;
+      border-radius: 18px;
+      border: 2px solid rgba(251,191,36,.45);
+      box-shadow: 0 0 0 6px rgba(251,191,36,.08);
+      background: rgba(255,255,255,.03);
+    }
+
+    .student-grid {
       display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
       gap: 16px;
     }
-    .hero {
-      background: linear-gradient(135deg, rgba(79,70,229,0.34), rgba(124,58,237,0.28));
-      border: 1px solid rgba(255,255,255,0.12);
-      border-radius: 24px;
-      padding: 18px;
-      box-shadow: var(--shadow);
-      backdrop-filter: blur(12px);
-    }
-    .hero h1 { margin: 0 0 6px; font-size: clamp(24px, 4vw, 34px); }
-    .hero p { margin: 0; color: #dbe4ff; line-height: 1.7; }
-    .teacher-bar { display: grid; grid-template-columns: 1fr auto auto; gap: 10px; margin-top: 14px; }
-    .panel {
-      background: var(--card);
-      color: var(--text);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
+
+    .student-card {
+      background: #f8fbff;
+      border: 1px solid var(--line);
+      border-radius: 20px;
       padding: 16px;
-      border: 1px solid rgba(255,255,255,0.24);
+      color: var(--text);
     }
-    .grid { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 16px; }
-    .grid-equal { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-    .section-title { margin: 0 0 10px; font-size: 20px; color: var(--text); }
-    .sub { color: var(--muted); font-size: 14px; line-height: 1.65; margin-top: -4px; margin-bottom: 12px; }
-    input, select, button, textarea { font: inherit; }
-    input[type="text"], textarea, select {
-      width: 100%; border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; background: #fff; color: var(--text);
-    }
-    button {
-      border: none; border-radius: 12px; padding: 12px 16px; font-weight: 800; cursor: pointer;
-      transition: transform .08s ease, opacity .2s ease;
-    }
-    button:hover { opacity: .96; }
-    button:active { transform: scale(.985); }
-    .btn-primary { background: #2563eb; color: #fff; }
-    .btn-secondary { background: #e2e8f0; color: var(--text); }
-    .btn-danger { background: var(--danger); color: #fff; }
-    .btn-success { background: var(--good); color: #fff; }
-    .btn-warn { background: #f59e0b; color: #fff; }
-    .toolbar, .form-row { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px; }
-    .form-row > * { flex: 1 1 180px; }
-    .stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-top: 12px; }
-    .stat { border: 1px solid #dbe4f0; background: #f8fafc; border-radius: 14px; padding: 12px; }
-    .stat .label { font-size: 12px; color: var(--muted); margin-bottom: 6px; }
-    .stat .value { font-size: 20px; font-weight: 800; color: var(--text); }
-    table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 14px; }
-    th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid #e5edf7; vertical-align: top; }
-    th { color: var(--muted); font-size: 13px; }
-    .note { color: var(--muted); font-size: 13px; line-height: 1.65; }
-    .list-box { max-height: 380px; overflow: auto; border: 1px solid #e5edf7; border-radius: 14px; padding: 8px 10px; background: #f8fafc; }
-    .student-item {
-      display: flex; justify-content: space-between; gap: 12px; align-items: center;
-      padding: 10px 6px; border-bottom: 1px solid #e5edf7;
-    }
-    .student-item:last-child { border-bottom: none; }
-    .student-item.selectable { cursor: pointer; border-radius: 10px; padding-inline: 10px; }
-    .student-item.selectable:hover { background: #eef4ff; }
-    .student-item.selectable.active { background: #dbeafe; border: 1px solid #93c5fd; }
 
-    .small { font-size: 12px; color: var(--muted); }
-    .muted-badge, .ok-badge, .ng-badge, .warn-badge {
-      display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 800; border-radius: 999px; padding: 6px 10px;
-    }
-    .muted-badge { background: #e2e8f0; color: #334155; }
-    .ok-badge { background: #dcfce7; color: #166534; }
-    .ng-badge { background: #fee2e2; color: #991b1b; }
-    .warn-badge { background: #fef3c7; color: #92400e; }
-    .qr-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 12px; margin-top: 12px; }
-    .qr-card { border: 1px solid #dbe4f0; border-radius: 14px; padding: 10px; background: #f8fafc; text-align: center; break-inside: avoid; }
-    .qr-card canvas, .qr-card img { width: 100%; height: auto; border-radius: 10px; background: white; }
-    .print-only { display: none; }
-
-    .student-wrap {
-      min-height: calc(100vh - 72px);
-      display: grid;
-      align-items: center;
-      padding: 18px 12px 28px;
-    }
-    .student-shell {
-      width: min(1100px, 100%);
-      margin: 0 auto;
-      display: grid;
-      gap: 18px;
-    }
-    .adventure-header {
-      position: relative;
-      overflow: hidden;
-      border-radius: 28px;
-      border: 1px solid rgba(255,255,255,.12);
-      box-shadow: var(--shadow);
-      background:
-        linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03)),
-        linear-gradient(135deg, rgba(37,99,235,.18), rgba(124,58,237,.18));
-      padding: 24px 22px;
-    }
-    .adventure-header::before {
-      content: "";
-      position: absolute;
-      inset: auto -8% -30% -8%;
-      height: 55%;
-      background:
-        radial-gradient(circle at 20% 20%, rgba(255,255,255,.18), transparent 18%),
-        radial-gradient(circle at 80% 35%, rgba(255,255,255,.14), transparent 16%),
-        linear-gradient(180deg, rgba(22,163,74,.8), rgba(21,128,61,.86));
-      clip-path: polygon(0 60%, 8% 50%, 16% 62%, 24% 42%, 32% 58%, 40% 36%, 48% 54%, 56% 40%, 64% 62%, 72% 48%, 80% 66%, 88% 44%, 100% 60%, 100% 100%, 0 100%);
-      opacity: .35;
-    }
-    .adventure-header h1 {
-      margin: 0;
-      font-size: clamp(28px, 6vw, 52px);
-      letter-spacing: .04em;
-      color: #fff8dc;
-      text-shadow: 0 3px 0 rgba(0,0,0,.35);
-    }
-    .adventure-sub {
-      margin-top: 8px;
-      color: #e5edff;
-      line-height: 1.8;
-      max-width: 760px;
-    }
-    .student-grid { display: grid; grid-template-columns: 0.92fr 1.08fr; gap: 18px; }
-    .quest-card {
-      background: var(--bg-panel);
-      border: 1px solid rgba(255,255,255,.1);
-      border-radius: 24px;
-      box-shadow: var(--shadow);
-      padding: 18px;
-      backdrop-filter: blur(10px);
-      color: #eef2ff;
-    }
-    .quest-title {
+    .student-top {
       display: flex;
+      gap: 14px;
       align-items: center;
-      justify-content: space-between;
-      gap: 10px;
       margin-bottom: 12px;
     }
-    .quest-title h2 {
-      margin: 0;
-      font-size: 20px;
-      color: #fff8dc;
-    }
-    .quest-mini { color: #c7d2fe; font-size: 13px; line-height: 1.6; }
-    .scanner-frame {
-      border-radius: 20px;
-      border: 2px solid rgba(251,191,36,.46);
-      padding: 12px;
-      background: linear-gradient(180deg, rgba(15,23,42,.95), rgba(30,41,59,.8));
-      box-shadow: inset 0 0 0 1px rgba(255,255,255,.06);
-    }
-    #reader {
-      width: 100%;
-      overflow: hidden;
-      border-radius: 16px;
-      min-height: 300px;
-      background: #020617;
-      border: 1px dashed rgba(255,255,255,.18);
-    }
-    .subject-chips { display: flex; flex-wrap: wrap; gap: 10px; }
-    .chip input { display: none; }
-    .chip label {
-      display: inline-flex; align-items: center; justify-content: center; padding: 10px 14px;
-      border-radius: 999px; border: 1px solid rgba(255,255,255,.14);
-      background: rgba(255,255,255,.08); color: #eef2ff; font-weight: 800; cursor: pointer; min-width: 88px;
-    }
-    .chip input:checked + label {
-      background: linear-gradient(135deg, rgba(251,191,36,.95), rgba(249,115,22,.92));
-      color: #311805; border-color: transparent;
-      box-shadow: 0 10px 20px rgba(249,115,22,.22);
-    }
-    .student-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
-    .student-btn {
-      background: linear-gradient(135deg, #2563eb, #4f46e5);
-      color: white;
-      border-radius: 14px;
-      padding: 13px 18px;
-      font-weight: 900;
-      box-shadow: 0 10px 22px rgba(37,99,235,.22);
-    }
-    .student-btn.secondary { background: rgba(255,255,255,.1); box-shadow: none; border: 1px solid rgba(255,255,255,.12); }
-    .student-status-bar {
-      display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px;
-    }
-    .status-pill {
-      background: rgba(255,255,255,.08);
-      border: 1px solid rgba(255,255,255,.1);
-      color: #dbe4ff;
-      border-radius: 999px;
-      padding: 8px 12px;
-      font-size: 13px;
-      font-weight: 800;
-    }
-    .result-stage {
-      position: relative;
-      overflow: hidden;
-      min-height: 100%;
-      background:
-        radial-gradient(circle at 50% 0%, rgba(251,191,36,.16), transparent 35%),
-        linear-gradient(180deg, rgba(12,18,38,.95), rgba(15,23,42,.92));
-    }
-    .result-stage::after {
-      content: "";
-      position: absolute;
-      inset: auto -10% -20% -10%;
-      height: 40%;
-      background: linear-gradient(180deg, rgba(34,197,94,.8), rgba(22,163,74,.85));
-      clip-path: polygon(0 60%, 12% 46%, 25% 62%, 38% 38%, 50% 56%, 62% 36%, 75% 58%, 88% 40%, 100% 60%, 100% 100%, 0 100%);
-      opacity: .16;
-    }
-    .result-empty {
-      display: grid;
-      place-items: center;
-      min-height: 480px;
-      text-align: center;
-      color: #cbd5e1;
-      line-height: 1.9;
-      padding: 16px;
-    }
-    .scan-result {
-      display: none;
-      position: relative;
-      z-index: 1;
-      grid-template-columns: 180px 1fr;
-      gap: 18px;
-      align-items: center;
-      min-height: 480px;
-    }
-    .title-image {
-      width: 180px; height: 180px; object-fit: contain;
-      background: rgba(255,255,255,.96);
-      border-radius: 24px;
-      border: 4px solid rgba(251,191,36,.58);
-      padding: 10px;
-      box-shadow: 0 14px 28px rgba(0,0,0,.28);
-      justify-self: center;
-    }
-    .result-heading {
-      font-size: clamp(28px, 4.2vw, 42px);
-      font-weight: 900;
-      line-height: 1.25;
-      color: #fff8dc;
-      text-shadow: 0 3px 0 rgba(0,0,0,.25);
-      margin-bottom: 10px;
-    }
-    .result-copy {
-      color: #e2e8f0;
-      line-height: 1.8;
-      font-size: 16px;
-    }
-    .result-stats {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 12px;
-      margin-top: 18px;
-    }
-    .result-stat {
-      background: rgba(255,255,255,.08);
-      border: 1px solid rgba(255,255,255,.12);
+
+    .student-image {
+      width: 112px;
+      height: 112px;
+      object-fit: cover;
       border-radius: 18px;
-      padding: 14px;
+      border: 2px solid #e6eefb;
+      background: #e5e7eb;
+      flex-shrink: 0;
     }
-    .result-stat .label { color: #c7d2fe; font-size: 12px; margin-bottom: 6px; }
-    .result-stat .value { color: #fff; font-size: 24px; font-weight: 900; }
-    .student-footer-note {
-      text-align: center;
-      color: #cbd5e1;
-      font-size: 13px;
+
+    .student-name {
+      margin: 0 0 6px;
+      font-size: 22px;
+      color: #172554;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: linear-gradient(135deg, rgba(251,191,36,.22), rgba(124,58,237,.18));
+      color: #1e3a8a;
+      font-size: 12px;
+      font-weight: 700;
+      margin-bottom: 6px;
+      border: 1px solid #e5e7eb;
+    }
+
+    .stat {
+      font-size: 14px;
+      color: #334155;
       line-height: 1.7;
     }
 
-    @media print {
-      body { background: #fff; color: #000; }
-      .mode-switch, #teacherScreen .app > *:not(#printArea) { display: none !important; }
-      #printArea, #printArea * { display: block !important; color: #000; }
-      .qr-list { display: grid !important; grid-template-columns: repeat(4, 1fr); gap: 10px; }
-      .qr-card { page-break-inside: avoid; }
+    .xp-wrap {
+      margin-top: 10px;
     }
-    @media (max-width: 960px) {
-      .grid, .grid-equal, .student-grid { grid-template-columns: 1fr; }
-      .teacher-bar { grid-template-columns: 1fr; }
-      .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-      .scan-result { grid-template-columns: 1fr; min-height: auto; }
-      .result-empty { min-height: 280px; }
-      .title-image { width: 150px; height: 150px; }
+
+    .xp-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 13px;
+      color: #334155;
+      margin-bottom: 6px;
+    }
+
+    .xp-bar {
+      height: 12px;
+      border-radius: 999px;
+      background: #e2e8f0;
+      overflow: hidden;
+      border: 1px solid #d6deea;
+    }
+
+    .xp-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #fbbf24, #f59e0b);
+      border-radius: 999px;
+    }
+
+    .subblock {
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid #e2e8f0;
+    }
+
+    .small {
+      font-size: 13px;
+      color: #475569;
+      line-height: 1.7;
+    }
+
+    .history-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: #1e293b;
+      margin-bottom: 8px;
+    }
+
+    .history-list {
+      margin: 0;
+      padding-left: 18px;
+      color: #334155;
+      font-size: 13px;
+      line-height: 1.8;
+      max-height: 220px;
+      overflow: auto;
+    }
+
+    .overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(2, 6, 23, 0.82);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      padding: 20px;
+    }
+
+    .overlay-box {
+      width: min(95vw, 580px);
+      background: linear-gradient(180deg, rgba(30,41,59,.98), rgba(15,23,42,.98));
+      border: 2px solid rgba(251,191,36,.55);
+      border-radius: 24px;
+      padding: 22px 18px;
+      text-align: center;
+      box-shadow: 0 22px 48px rgba(0,0,0,.45);
+      color: #fff;
+    }
+
+    .overlay-title {
+      font-size: 28px;
+      font-weight: 800;
+      color: #fff7d6;
+      margin: 0 0 10px;
+    }
+
+    .overlay-sub {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 14px;
+      color: #fff;
+    }
+
+    .overlay-image {
+      width: 180px;
+      height: 180px;
+      object-fit: cover;
+      border-radius: 22px;
+      border: 2px solid rgba(251,191,36,.6);
+      background: #475569;
+      margin-bottom: 14px;
+    }
+
+    .overlay-text {
+      font-size: 16px;
+      line-height: 1.8;
+      color: #fff;
+    }
+
+    .subject-title {
+      text-align: left;
+      margin: 18px 0 8px;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .subject-tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: flex-start;
+    }
+
+    .teacher-key-box {
+      margin-top: 8px;
+      color: #fff;
+      font-size: 14px;
+      line-height: 1.8;
+    }
+
+    a.mode-link {
+      color: #fde68a;
+      word-break: break-all;
+    }
+
+    @media (max-width: 700px) {
+      body { padding: 14px; }
+      .hero h1 { font-size: 27px; }
+      .student-top { align-items: flex-start; }
+      .student-image { width: 96px; height: 96px; }
+      .overlay-image { width: 150px; height: 150px; }
     }
   </style>
 </head>
 <body>
-  <div class="mode-switch">
-    <button id="showStudentBtn" class="mode-btn active">生徒用 読み取り画面</button>
-    <button id="showTeacherBtn" class="mode-btn">教師用 管理画面</button>
+  <div class="app">
+    <div class="hero">
+      <h1>提出RPG</h1>
+      <p>
+        QRコードを読み取ると経験値が5ポイント増えます。<br>
+        読み取り後に称号画像・レベル・教科選択・六角形グラフが表示されます。<br>
+        先生ごとにURLを分けることで、データを分離できます。
+      </p>
+      <div class="mode-switch">
+        <button class="btn-primary" onclick="openMode('student')">生徒モード</button>
+        <button class="btn-secondary" onclick="openMode('teacher')">先生モード</button>
+      </div>
+    </div>
+
+    <div class="section" id="teacherUrlSection">
+      <h2>先生専用URL作成</h2>
+      <div class="row">
+        <input id="teacherNameInput" placeholder="先生名またはクラス名を入力（例：3A）" />
+        <button class="btn-primary" onclick="generateTeacherUrl()">専用URLを作成</button>
+      </div>
+      <div id="generatedUrlBox" class="notice" style="margin-top:10px;"></div>
+    </div>
+
+    <div class="section">
+      <h2 id="modeTitle">モード表示</h2>
+      <div id="modeDescription" class="notice"></div>
+      <div class="teacher-key-box">
+        現在の先生キー: <strong id="teacherKeyDisplay"></strong>
+      </div>
+    </div>
+
+    <div class="section" id="teacherRegistrationSection">
+      <h2>① 生徒登録</h2>
+      <div class="row">
+        <input id="nameInput" placeholder="生徒名を入力" />
+        <button class="btn-primary" onclick="addStudent()">追加</button>
+        <button class="btn-secondary" onclick="exportData()">データを書き出し</button>
+        <button class="btn-danger" onclick="resetAllData()">全データ削除</button>
+      </div>
+      <div class="notice">この先生キーの中だけで、生徒データ・経験値・履歴・教科記録が保存されます。</div>
+    </div>
+
+    <div class="section" id="scannerSection">
+      <h2>② QR読み取り</h2>
+      <div id="reader"></div>
+      <div class="notice">同じ生徒は1日1回しかQRで加点されません。</div>
+    </div>
+
+    <div class="section" id="teacherListSection">
+      <h2>③ 生徒一覧</h2>
+      <div id="studentList" class="student-grid"></div>
+    </div>
   </div>
 
-  <section id="studentScreen" class="screen active">
-    <div class="student-wrap">
-      <div class="student-shell">
-        <section class="adventure-header">
-          <h1>提出物クエスト</h1>
-          <div class="adventure-sub">
-            きょうのミッションは、提出物を届けて経験値をためること。<br>
-            QRコードをかざして、自分の称号をレベルアップさせよう。
-          </div>
-        </section>
-
-        <div class="student-grid">
-          <section class="quest-card">
-            <div class="quest-title">
-              <h2>冒険の受付所</h2>
-              <span class="status-pill">1日1回まで記録</span>
-            </div>
-            <div class="quest-mini">提出する教科を選んでから、QRコードをカメラにかざしてください。</div>
-            <div style="margin-top:14px; margin-bottom:10px; font-weight:800; color:#fff8dc;">提出教科</div>
-            <div class="subject-chips" id="subjectChips"></div>
-            <div class="scanner-frame" style="margin-top:16px;">
-              <div id="reader"></div>
-            </div>
-            <div class="student-actions">
-              <button class="student-btn" id="startScanBtn">カメラを開始</button>
-              <button class="student-btn secondary" id="stopScanBtn">カメラを停止</button>
-            </div>
-            <div class="student-status-bar">
-              <span class="status-pill" id="teacherStatus">現在の先生キー: default</span>
-              <span class="status-pill">結果表示は30秒</span>
-            </div>
-          </section>
-
-          <section class="quest-card result-stage">
-            <div id="resultEmpty" class="result-empty">
-              <div>
-                <div style="font-size:28px; font-weight:900; color:#fff8dc; margin-bottom:8px;">冒険の結果はここに表示</div>
-                <div>QRコードを読み取ると、レベル・経験値・称号が大きく表示されます。</div>
-              </div>
-            </div>
-            <div class="scan-result" id="scanResult">
-              <img id="titleImage" class="title-image" alt="称号画像" />
-              <div>
-                <div id="scanMessage" class="result-heading"></div>
-                <div id="scanSubMessage" class="result-copy"></div>
-                <div class="result-stats">
-                  <div class="result-stat"><div class="label">現在レベル</div><div class="value" id="resultLevel">1</div></div>
-                  <div class="result-stat"><div class="label">経験値</div><div class="value" id="resultXp">0</div></div>
-                  <div class="result-stat"><div class="label">称号</div><div class="value" id="resultTitle">村人</div></div>
-                  <div class="result-stat"><div class="label">本日の提出</div><div class="value" id="resultToday">0</div></div>
-                </div>
-              </div>
-            </div>
-          </section>
-        </div>
-
-        <div class="student-footer-note">
-          生徒用画面では読み取りだけにし、管理機能は教師用画面に分けています。
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <section id="teacherScreen" class="screen">
-    <div class="app">
-      <section class="hero">
-        <h1>提出物クエスト 管理画面</h1>
-        <p>
-          こちらは教師用の管理画面です。名簿登録、未提出確認、手入力、取り消し、履歴確認、QR一括作成ができます。<br>
-          生徒には上の「生徒用 読み取り画面」を見せるだけで運用できます。
-        </p>
-        <div class="teacher-bar">
-          <input id="teacherKey" type="text" placeholder="先生ごとの合言葉を入力（例：hie-3a-2026）" />
-          <button class="btn-primary" id="saveTeacherKeyBtn">データを切り替える</button>
-          <button class="btn-secondary" id="resetTeacherDataBtn">この先生のデータを初期化</button>
-        </div>
-      </section>
-
-      <div class="grid">
-        <section class="panel">
-          <h2 class="section-title">1. 今日のダッシュボード</h2>
-          <p class="sub">教科別の提出回数と、今日の未提出者を確認できます。</p>
-          <canvas id="radarChart" height="280"></canvas>
-          <div class="stats">
-            <div class="stat"><div class="label">登録生徒数</div><div class="value" id="totalStudents">0</div></div>
-            <div class="stat"><div class="label">本日の提出人数</div><div class="value" id="todayCount">0</div></div>
-            <div class="stat"><div class="label">本日の未提出人数</div><div class="value" id="todayUnsubmittedCount">0</div></div>
-            <div class="stat"><div class="label">累計提出回数</div><div class="value" id="totalScans">0</div></div>
-          </div>
-          <div class="toolbar">
-            <select id="unsubmittedSubjectFilter">
-              <option value="all">未提出一覧（全体）</option>
-            </select>
-            <button class="btn-secondary" id="refreshUnsubmittedBtn">未提出一覧を更新</button>
-          </div>
-          <div class="list-box" id="unsubmittedList"></div>
-        </section>
-
-        <section class="panel">
-          <h2 class="section-title">2. 手入力・取り消し</h2>
-          <p class="sub">QRが読めないときの記録と、直前の提出取り消しに使います。</p>
-          <div class="form-row">
-            <select id="manualStudentSelect"></select>
-            <button class="btn-primary" id="manualSubmitBtn">手入力で提出登録</button>
-          </div>
-          <div class="note" style="margin-top:10px;">教科は生徒用画面で選ぶものと共通です。必要なら生徒用画面で教科を選んでから記録してください。</div>
-          <div class="toolbar">
-            <button class="btn-warn" id="undoLastBtn">直前の提出を取り消す</button>
-          </div>
-          <div id="lastSuccessInfo" class="list-box"></div>
-        </section>
-      </div>
-
-      <div class="grid">
-        <section class="panel">
-          <h2 class="section-title">3. 生徒名簿の登録とQR一括作成</h2>
-          <p class="sub">フォーム入力で1人ずつ登録できます。まとめて入力したい場合は下の一括入力欄も使えます。</p>
-
-          <div class="grid-equal">
-            <div>
-              <div class="form-row">
-                <input id="studentIdInput" type="text" placeholder="生徒ID（例：2026001）" />
-                <input id="studentNameInput" type="text" placeholder="名前（例：山田 太郎）" />
-              </div>
-              <div class="toolbar">
-                <button class="btn-primary" id="addStudentBtn">生徒を追加</button>
-                <button class="btn-secondary" id="updateStudentBtn">選択中の生徒を更新</button>
-                <button class="btn-danger" id="deleteStudentBtn">選択中の生徒を削除</button>
-                <button class="btn-secondary" id="clearStudentFormBtn">入力をクリア</button>
-              </div>
-              <div class="note">一覧から生徒を選ぶと、上のフォームに自動で読み込まれます。</div>
-              <div class="list-box" id="rosterManagerList" style="margin-top:12px;"></div>
-            </div>
-
-            <div>
-              <div class="note" style="margin-bottom:8px;">一括入力したい場合は、1行に1人ずつ <strong>生徒ID,名前</strong> の形で入力してください。</div>
-              <textarea id="rosterInput" rows="10" placeholder="2026001,山田 太郎&#10;2026002,佐藤 花子&#10;2026003,田中 一郎"></textarea>
-              <div class="toolbar">
-                <button class="btn-primary" id="saveRosterBtn">一括で名簿を保存</button>
-                <button class="btn-secondary" id="loadSampleBtn">サンプルを入れる</button>
-                <button class="btn-secondary" id="downloadDataBtn">データをJSON保存</button>
-                <button class="btn-success" id="printQrBtn">QRをまとめて印刷</button>
-              </div>
-              <div class="note">
-                レベルは <strong>20経験値ごとに1アップ</strong>、1回の提出で <strong>+5経験値</strong>。<br>
-                同じ生徒は <strong>1日1回まで</strong> 提出を記録します。<br>
-                同じURLでも、先生キーを変えればデータが分かれます。
-              </div>
-            </div>
-          </div>
-
-          <div id="qrCards" class="qr-list"></div>
-        </section>
-
-        <section class="panel">
-          <h2 class="section-title">4. 提出履歴</h2>
-          <p class="sub">新しいものが上に表示されます。CSV保存にも対応しています。</p>
-          <div class="toolbar">
-            <button class="btn-secondary" id="exportCsvBtn">履歴をCSV保存</button>
-            <button class="btn-danger" id="clearHistoryBtn">履歴だけ消す</button>
-          </div>
-          <div style="overflow:auto; max-height: 560px;">
-            <table>
-              <thead>
-                <tr>
-                  <th>日時</th>
-                  <th>生徒</th>
-                  <th>教科</th>
-                  <th>結果</th>
-                </tr>
-              </thead>
-              <tbody id="historyBody"></tbody>
-            </table>
-          </div>
-        </section>
-      </div>
-
-      <section id="printArea" class="panel print-only">
-        <h2>QRコード一覧</h2>
-        <div id="printQrCards" class="qr-list"></div>
-      </section>
-    </div>
-  </section>
-
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://unpkg.com/html5-qrcode"></script>
-  <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
   <script>
-    const SUBJECTS = ["数学", "理科", "社会", "英語", "国語", "その他"];
-    const XP_PER_SCAN = 5;
-    const XP_PER_LEVEL = 20;
-    const RESULT_DISPLAY_MS = 30000;
-    const STORAGE_PREFIX = "submissionQuest";
-
-    const defaultState = () => ({
-      roster: {},
-      students: {},
-      history: [],
-      subjectCounts: Object.fromEntries(SUBJECTS.map(s => [s, 0]))
-    });
-
-    const el = (id) => document.getElementById(id);
-    let teacherKey = localStorage.getItem(`${STORAGE_PREFIX}_teacherKey`) || "default";
-    let state = loadState();
-    let chart;
-    let scanner = null;
-    let scanning = false;
-    let lastScanLock = "";
-    let hideResultTimer = null;
-    let currentScreen = localStorage.getItem(`${STORAGE_PREFIX}_screenMode`) || 'student';
-    let selectedRosterId = "";
-
-    function todayKey() {
-      const now = new Date();
-      const y = now.getFullYear();
-      const m = String(now.getMonth() + 1).padStart(2, "0");
-      const d = String(now.getDate()).padStart(2, "0");
-      return `${y}-${m}-${d}`;
+    function getMode() {
+      const params = new URLSearchParams(window.location.search);
+      return params.get("mode") === "teacher" ? "teacher" : "student";
     }
 
-    function nowLabel() { return new Date().toLocaleString("ja-JP"); }
-    function storageKey() { return `${STORAGE_PREFIX}_${teacherKey}`; }
+    function getTeacherKey() {
+      const params = new URLSearchParams(window.location.search);
+      return params.get("teacher") || "default";
+    }
 
-    function loadState() {
+    const STORAGE_KEY = `submit_rpg_${getTeacherKey()}`;
+
+    const SUBJECTS = ["数学", "理科", "社会", "英語", "国語", "その他"];
+
+    const titleImageMap = {
+      "村人": "villager.jpg",
+      "冒険者": "adventurer.jpg",
+      "戦士": "warrior.jpg",
+      "勇者": "hero.jpg",
+      "賢者": "sage.jpg",
+      "伝説の勇者": "legendary_hero.jpg"
+    };
+
+    let students = loadStudents();
+
+    function openMode(mode) {
+      const teacher = encodeURIComponent(getTeacherKey());
+      location.href = `${window.location.pathname}?mode=${mode}&teacher=${teacher}`;
+    }
+
+    function generateTeacherUrl() {
+      const input = document.getElementById("teacherNameInput");
+      const teacherName = input.value.trim();
+
+      if (!teacherName) {
+        alert("先生名またはクラス名を入力してください。");
+        return;
+      }
+
+      const encodedName = encodeURIComponent(teacherName);
+      const teacherUrl = `${window.location.origin}${window.location.pathname}?mode=teacher&teacher=${encodedName}`;
+      const studentUrl = `${window.location.origin}${window.location.pathname}?mode=student&teacher=${encodedName}`;
+
+      document.getElementById("generatedUrlBox").innerHTML = `
+        <div><strong>先生用URL</strong></div>
+        <a class="mode-link" href="${teacherUrl}" target="_blank">${teacherUrl}</a>
+        <div style="margin-top:8px;"><strong>生徒用URL</strong></div>
+        <a class="mode-link" href="${studentUrl}" target="_blank">${studentUrl}</a>
+      `;
+    }
+
+    function loadStudents() {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return [];
       try {
-        const raw = localStorage.getItem(storageKey());
-        if (!raw) return defaultState();
         const parsed = JSON.parse(raw);
-        return {
-          roster: parsed.roster || {},
-          students: parsed.students || {},
-          history: parsed.history || [],
-          subjectCounts: parsed.subjectCounts || Object.fromEntries(SUBJECTS.map(s => [s, 0]))
-        };
-      } catch {
-        return defaultState();
+        return Array.isArray(parsed) ? parsed : [];
+      } catch (e) {
+        return [];
       }
     }
 
-    function saveState() {
-      localStorage.setItem(storageKey(), JSON.stringify(state));
-      localStorage.setItem(`${STORAGE_PREFIX}_teacherKey`, teacherKey);
+    function saveStudents() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(students));
     }
 
-    function levelFromXp(xp) { return Math.floor(xp / XP_PER_LEVEL) + 1; }
+    function todayString() {
+      const d = new Date();
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, "0");
+      const day = String(d.getDate()).padStart(2, "0");
+      return `${y}-${m}-${day}`;
+    }
 
-    function getTitle(level) {
-      if (level >= 10) return "伝説の勇者";
+    function nowString() {
+      const d = new Date();
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, "0");
+      const day = String(d.getDate()).padStart(2, "0");
+      const h = String(d.getHours()).padStart(2, "0");
+      const min = String(d.getMinutes()).padStart(2, "0");
+      const s = String(d.getSeconds()).padStart(2, "0");
+      return `${y}-${m}-${day} ${h}:${min}:${s}`;
+    }
+
+    function getThresholds() {
+      return [0, 20, 45, 75, 110, 150, 200, 260, 330, 410, 500, 600];
+    }
+
+    function calcLevel(xp) {
+      const thresholds = getThresholds();
+      for (let i = thresholds.length - 1; i >= 0; i--) {
+        if (xp >= thresholds[i]) return i + 1;
+      }
+      return 1;
+    }
+
+    function getTitleByLevel(level) {
+      if (level >= 12) return "伝説の勇者";
+      if (level >= 11) return "大賢者";
+      if (level >= 10) return "賢者";
+      if (level >= 9) return "英雄";
       if (level >= 8) return "勇者";
-      if (level >= 6) return "賢者";
-      if (level >= 4) return "戦士";
-      if (level >= 2) return "冒険者";
+      if (level >= 7) return "上級戦士";
+      if (level >= 6) return "戦士";
+      if (level >= 5) return "熟練冒険者";
+      if (level >= 4) return "冒険者";
+      if (level >= 3) return "新米冒険者";
+      if (level >= 2) return "見習い";
       return "村人";
     }
 
-    function svgDataUri(title, bg1, bg2, emoji) {
-      const svg = `
-        <svg xmlns="http://www.w3.org/2000/svg" width="300" height="300" viewBox="0 0 300 300">
-          <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="${bg1}" /><stop offset="100%" stop-color="${bg2}" /></linearGradient></defs>
-          <rect rx="28" ry="28" width="300" height="300" fill="url(#g)"/>
-          <circle cx="150" cy="112" r="62" fill="rgba(255,255,255,0.2)" />
-          <text x="150" y="132" text-anchor="middle" font-size="64">${emoji}</text>
-          <rect x="28" y="205" width="244" height="52" rx="18" fill="rgba(255,255,255,0.9)"/>
-          <text x="150" y="240" text-anchor="middle" font-size="26" font-family="sans-serif" font-weight="700" fill="#10213a">${title}</text>
-        </svg>`;
-      return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
+    function getImageByTitle(title) {
+      if (title.includes("伝説の勇者")) return titleImageMap["伝説の勇者"];
+      if (title.includes("賢者")) return titleImageMap["賢者"];
+      if (title.includes("勇者")) return titleImageMap["勇者"];
+      if (title.includes("戦士")) return titleImageMap["戦士"];
+      if (title.includes("冒険者")) return titleImageMap["冒険者"];
+      return titleImageMap["村人"];
     }
 
-    const titleImages = {
-      "村人": svgDataUri("村人", "#94a3b8", "#64748b", "🏡"),
-      "冒険者": svgDataUri("冒険者", "#38bdf8", "#2563eb", "🧭"),
-      "戦士": svgDataUri("戦士", "#f97316", "#ea580c", "🛡️"),
-      "賢者": svgDataUri("賢者", "#8b5cf6", "#6d28d9", "📘"),
-      "勇者": svgDataUri("勇者", "#22c55e", "#15803d", "⚔️"),
-      "伝説の勇者": svgDataUri("伝説の勇者", "#f59e0b", "#d97706", "👑")
-    };
-
-    function renderSubjectChips() {
-      el("subjectChips").innerHTML = SUBJECTS.map(subject => `
-        <div class="chip">
-          <input type="checkbox" id="sub-${subject}" value="${subject}">
-          <label for="sub-${subject}">${subject}</label>
-        </div>`).join("");
-      el("unsubmittedSubjectFilter").innerHTML = [`<option value="all">未提出一覧（全体）</option>`, ...SUBJECTS.map(s => `<option value="${s}">${s}の未提出</option>`)].join("");
+    function getCurrentLevelStartXP(level) {
+      const thresholds = getThresholds();
+      return thresholds[Math.max(0, level - 1)] ?? thresholds[thresholds.length - 1];
     }
 
-    function selectedSubjects() { return [...document.querySelectorAll('#subjectChips input:checked')].map(i => i.value); }
-    function clearSelectedSubjects() { document.querySelectorAll('#subjectChips input').forEach(i => i.checked = false); }
+    function getNextLevelXP(level) {
+      const thresholds = getThresholds();
+      return thresholds[level] ?? null;
+    }
 
-    function renderChart() {
-      const ctx = el("radarChart");
-      if (!ctx) return;
-      if (typeof Chart === "undefined") {
-        const note = document.createElement("div");
-        note.className = "note";
-        note.textContent = "グラフを読み込めなかったため、ここでは表示していません。";
-        ctx.replaceWith(note);
+    function xpIntoCurrentLevel(xp) {
+      const level = calcLevel(xp);
+      const startXP = getCurrentLevelStartXP(level);
+      return xp - startXP;
+    }
+
+    function xpNeededForCurrentLevel(level) {
+      const startXP = getCurrentLevelStartXP(level);
+      const nextXP = getNextLevelXP(level);
+      if (nextXP === null) return 0;
+      return nextXP - startXP;
+    }
+
+    function xpProgressPercent(xp) {
+      const level = calcLevel(xp);
+      const needed = xpNeededForCurrentLevel(level);
+      if (needed === 0) return 100;
+      return (xpIntoCurrentLevel(xp) / needed) * 100;
+    }
+
+    function createEmptySubjectStats() {
+      return {
+        "数学": 0,
+        "理科": 0,
+        "社会": 0,
+        "英語": 0,
+        "国語": 0,
+        "その他": 0
+      };
+    }
+
+    function ensureStudentStats(student) {
+      if (!student.subjectStats) {
+        student.subjectStats = createEmptySubjectStats();
+      }
+      SUBJECTS.forEach(subject => {
+        if (typeof student.subjectStats[subject] !== "number") {
+          student.subjectStats[subject] = 0;
+        }
+      });
+    }
+
+    function applyModeUI() {
+      const modeTitle = document.getElementById("modeTitle");
+      const modeDescription = document.getElementById("modeDescription");
+      const teacherRegistrationSection = document.getElementById("teacherRegistrationSection");
+      const teacherListSection = document.getElementById("teacherListSection");
+      const teacherUrlSection = document.getElementById("teacherUrlSection");
+      const teacherKeyDisplay = document.getElementById("teacherKeyDisplay");
+      const scannerTitle = document.querySelector("#scannerSection h2");
+
+      teacherKeyDisplay.textContent = getTeacherKey();
+
+      if (getMode() === "teacher") {
+        modeTitle.textContent = "先生モード";
+        modeDescription.innerHTML = "生徒登録・一覧確認・削除・データ書き出しができます。<br>先生キーが違えば、別クラスとしてデータが分かれます。";
+        teacherRegistrationSection.style.display = "";
+        teacherListSection.style.display = "";
+        teacherUrlSection.style.display = "";
+        scannerTitle.textContent = "② QR読み取り（先生確認用）";
+      } else {
+        modeTitle.textContent = "生徒モード";
+        modeDescription.innerHTML = "QR読み取りと、読み取り後のステータス表示だけが使えます。<br>生徒登録や一覧は表示されません。";
+        teacherRegistrationSection.style.display = "none";
+        teacherListSection.style.display = "none";
+        teacherUrlSection.style.display = "none";
+        scannerTitle.textContent = "① QR読み取り";
+      }
+    }
+
+    function addStudent() {
+      if (getMode() !== "teacher") return;
+
+      const input = document.getElementById("nameInput");
+      const name = input.value.trim();
+
+      if (!name) {
+        alert("名前を入力してください。");
         return;
       }
-      if (chart) chart.destroy();
-      chart = new Chart(ctx, {
+
+      if (students.some(s => s.name === name)) {
+        alert("同じ名前の生徒がすでに登録されています。");
+        return;
+      }
+
+      const student = {
+        id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now() + Math.random()),
+        name,
+        xp: 0,
+        level: 1,
+        title: "村人",
+        lastScanDate: "",
+        history: [],
+        subjectStats: createEmptySubjectStats()
+      };
+
+      students.push(student);
+      saveStudents();
+      render();
+      input.value = "";
+    }
+
+    function deleteStudent(id) {
+      if (!confirm("この生徒を削除しますか？")) return;
+      students = students.filter(s => s.id !== id);
+      saveStudents();
+      render();
+    }
+
+    function showToast(message) {
+      const wrap = document.createElement("div");
+      wrap.className = "overlay";
+      wrap.style.background = "rgba(2, 6, 23, 0.55)";
+      wrap.innerHTML = `
+        <div class="overlay-box" style="width:min(88vw,360px);padding:18px 16px;">
+          <div class="overlay-title" style="font-size:22px;">通知</div>
+          <div class="overlay-text">${message}</div>
+        </div>
+      `;
+      document.body.appendChild(wrap);
+      setTimeout(() => {
+        if (document.body.contains(wrap)) wrap.remove();
+      }, 1200);
+    }
+
+    function showLevelUp(student) {
+      const title = getTitleByLevel(student.level);
+      const imageUrl = getImageByTitle(title);
+
+      const overlay = document.createElement("div");
+      overlay.className = "overlay";
+      overlay.innerHTML = `
+        <div class="overlay-box">
+          <div class="overlay-title">⭐ LEVEL UP! ⭐</div>
+          <div class="overlay-sub">${student.name}</div>
+          <img class="overlay-image" src="${imageUrl}" alt="${title}">
+          <div class="overlay-text">
+            Lv.${student.level} に到達！<br>
+            新しい称号は <strong>${title}</strong>。
+          </div>
+        </div>
+      `;
+      document.body.appendChild(overlay);
+
+      overlay.addEventListener("click", () => overlay.remove());
+
+      setTimeout(() => {
+        if (document.body.contains(overlay)) overlay.remove();
+      }, 2600);
+    }
+
+    function drawRadarChart(canvas, student) {
+      ensureStudentStats(student);
+
+      const existingChart = Chart.getChart(canvas);
+      if (existingChart) existingChart.destroy();
+
+      new Chart(canvas, {
         type: "radar",
         data: {
           labels: SUBJECTS,
           datasets: [{
-            label: "提出回数",
-            data: SUBJECTS.map(s => state.subjectCounts[s] || 0),
+            label: "家庭学習累計",
+            data: SUBJECTS.map(subject => student.subjectStats[subject]),
             fill: true,
-            backgroundColor: "rgba(37, 99, 235, 0.18)",
-            borderColor: "rgba(37, 99, 235, 0.95)",
-            pointBackgroundColor: "rgba(124, 58, 237, 0.95)",
-            pointRadius: 4
+            backgroundColor: "rgba(59, 130, 246, 0.28)",
+            borderColor: "rgba(251, 191, 36, 0.95)",
+            pointBackgroundColor: "rgba(251, 191, 36, 1)",
+            pointBorderColor: "#fff",
+            pointHoverBackgroundColor: "#fff",
+            pointHoverBorderColor: "rgba(251, 191, 36, 1)"
           }]
         },
         options: {
           responsive: true,
-          maintainAspectRatio: false,
-          scales: { r: { beginAtZero: true, ticks: { backdropColor: "transparent", color: "#51627d" }, pointLabels: { color: "#10213a", font: { size: 14, weight: '700' } }, grid: { color: "#d8e1ef" }, angleLines: { color: "#d8e1ef" } } },
-          plugins: { legend: { labels: { color: "#10213a", font: { weight: '700' } } } }
-        }
-      });
-    }
-
-    function ensureStudentRecord(id) {
-      if (!state.students[id]) {
-        state.students[id] = {
-          id,
-          name: state.roster[id] || `ID:${id}`,
-          xp: 0,
-          scanDates: [],
-          totalSubmissions: 0,
-          subjectCounts: Object.fromEntries(SUBJECTS.map(s => [s, 0]))
-        };
-      }
-      if (!state.students[id].subjectCounts) state.students[id].subjectCounts = Object.fromEntries(SUBJECTS.map(s => [s, 0]));
-      if (!state.students[id].scanDates) state.students[id].scanDates = [];
-      if (!state.students[id].totalSubmissions) state.students[id].totalSubmissions = 0;
-      return state.students[id];
-    }
-
-    function successfulTodayEntries() {
-      const today = todayKey();
-      return state.history.filter(h => h.dateKey === today && h.success && h.action !== 'undo');
-    }
-
-    function unsubmittedStudentIds(subject = 'all') {
-      const today = todayKey();
-      const studentIds = Object.keys(state.roster);
-      const submitted = new Set(
-        state.history.filter(h => h.dateKey === today && h.success && h.action !== 'undo' && (subject === 'all' || h.subjects.includes(subject))).map(h => h.studentId)
-      );
-      return studentIds.filter(id => !submitted.has(id));
-    }
-
-    function renderSummary() {
-      const studentIds = Object.keys(state.roster);
-      const todayStudents = new Set(successfulTodayEntries().map(h => h.studentId));
-      el("totalStudents").textContent = studentIds.length;
-      el("todayCount").textContent = todayStudents.size;
-      el("todayUnsubmittedCount").textContent = studentIds.length - todayStudents.size;
-      el("totalScans").textContent = state.history.filter(h => h.success && h.action !== 'undo').length;
-      el("teacherStatus").textContent = `現在の先生キー: ${teacherKey}`;
-    }
-
-    function renderHistory() {
-      const body = el("historyBody");
-      if (!state.history.length) {
-        body.innerHTML = `<tr><td colspan="4" class="note">まだ履歴はありません。</td></tr>`;
-        return;
-      }
-      body.innerHTML = state.history.slice().reverse().map(item => {
-        const badge = item.action === 'undo'
-          ? `<span class="warn-badge">取り消し</span>`
-          : item.success
-            ? `<span class="ok-badge">記録完了</span>`
-            : `<span class="ng-badge">記録なし</span>`;
-        return `
-          <tr>
-            <td>${item.timestamp}</td>
-            <td>${item.studentName}<br><span class="note">${item.studentId}</span></td>
-            <td>${(item.subjects || []).join("、") || "-"}</td>
-            <td>${badge}<br><span class="note">${item.message}</span></td>
-          </tr>`;
-      }).join("");
-    }
-
-    async function renderQrCards() {
-      const entries = Object.entries(state.roster);
-      const targets = [el("qrCards"), el("printQrCards")];
-      for (const wrap of targets) {
-        if (!wrap) continue;
-        if (!entries.length) { wrap.innerHTML = ""; continue; }
-        wrap.innerHTML = entries.map(([id, name]) => `
-          <div class="qr-card">
-            <div id="${wrap.id}-qr-${id}"></div>
-            <div style="margin-top:8px; font-weight:800;">${name}</div>
-            <div class="note">${id}</div>
-          </div>`).join("");
-      }
-      for (const [id] of entries) {
-        for (const wrap of targets) {
-          const holder = document.getElementById(`${wrap.id}-qr-${id}`);
-          if (!holder) continue;
-          try {
-            const canvas = document.createElement("canvas");
-            holder.innerHTML = "";
-            holder.appendChild(canvas);
-            await QRCode.toCanvas(canvas, id, { width: 160, margin: 1 });
-          } catch {
-            holder.textContent = "QR生成失敗";
+          maintainAspectRatio: true,
+          scales: {
+            r: {
+              beginAtZero: true,
+              suggestedMax: Math.max(3, ...SUBJECTS.map(subject => student.subjectStats[subject] + 1)),
+              angleLines: { color: "rgba(255,255,255,0.20)" },
+              grid: { color: "rgba(255,255,255,0.20)" },
+              pointLabels: {
+                color: "#ffffff",
+                font: { size: 13 }
+              },
+              ticks: {
+                color: "#ffffff",
+                backdropColor: "transparent",
+                stepSize: 1
+              }
+            }
+          },
+          plugins: {
+            legend: {
+              labels: { color: "#ffffff" }
+            }
           }
         }
-      }
-    }
-
-    function showScanResult(student, success, subjects, message) {
-      const level = levelFromXp(student.xp);
-      const title = getTitle(level);
-      el("titleImage").src = titleImages[title];
-      el("scanMessage").textContent = success ? `QUEST CLEAR  ${student.name}` : `NOTICE  ${student.name}`;
-      el("scanSubMessage").innerHTML = `${message}<br>教科: ${subjects.join("、") || "なし"}<br><span style="color:#fcd34d; font-weight:800;">この画面は30秒後に消えます。</span>`;
-      el("resultLevel").textContent = level;
-      el("resultXp").textContent = student.xp;
-      el("resultTitle").textContent = title;
-      el("resultToday").textContent = student.scanDates.includes(todayKey()) ? 1 : 0;
-      el("resultEmpty").style.display = "none";
-      el("scanResult").style.display = "grid";
-      clearTimeout(hideResultTimer);
-      hideResultTimer = setTimeout(() => {
-        el("scanResult").style.display = "none";
-        el("resultEmpty").style.display = "grid";
-      }, RESULT_DISPLAY_MS);
-    }
-
-    function addHistory(studentId, studentName, subjects, success, message, extra = {}) {
-      state.history.push({
-        timestamp: nowLabel(),
-        dateKey: todayKey(),
-        studentId,
-        studentName,
-        subjects,
-        success,
-        message,
-        ...extra
       });
-      saveState();
     }
 
-    function processSubmission(studentId, source = 'scan') {
-      const id = String(studentId).trim();
-      if (!id) return;
-      const subjects = selectedSubjects();
-      if (!subjects.length) {
-        alert("先に教科を1つ以上選んでください。");
-        return;
-      }
-      const student = ensureStudentRecord(id);
-      student.name = state.roster[id] || student.name;
+    function showStudentStatus(student) {
+      ensureStudentStats(student);
 
-      if (!state.roster[id]) {
-        addHistory(id, student.name, subjects, false, "名簿にないIDです。先に名簿へ登録してください。", { source, action: 'failed' });
-        showScanResult(student, false, subjects, "名簿にないIDです。先に名簿へ登録してください。");
-        refreshAll(false);
-        return;
-      }
+      const title = getTitleByLevel(student.level);
+      const imageUrl = getImageByTitle(title);
+      const currentLevelXP = xpIntoCurrentLevel(student.xp);
+      const progress = xpProgressPercent(student.xp);
 
-      const today = todayKey();
-      if (student.scanDates.includes(today)) {
-        addHistory(id, student.name, subjects, false, "今日はすでに記録済みです。1日1回までです。", { source, action: 'duplicate' });
-        showScanResult(student, false, subjects, "今日はすでに記録済みです。1日1回までです。");
-        refreshAll(false);
-        return;
-      }
+      const overlay = document.createElement("div");
+      overlay.className = "overlay";
+      overlay.innerHTML = `
+        <div class="overlay-box">
+          <div class="overlay-title">${student.name}</div>
+          <div class="overlay-sub">${title}</div>
+          <img class="overlay-image" src="${imageUrl}" alt="${title}">
+          <div class="overlay-text">
+            レベル：<strong>Lv.${student.level}</strong><br>
+            称号：<strong>${title}</strong><br>
+            経験値：<strong>${student.xp} XP</strong>
+          </div>
 
-      student.xp += XP_PER_SCAN;
-      student.totalSubmissions += 1;
-      student.scanDates.push(today);
-      subjects.forEach(subject => {
-        state.subjectCounts[subject] = (state.subjectCounts[subject] || 0) + 1;
-        student.subjectCounts[subject] = (student.subjectCounts[subject] || 0) + 1;
+          <div style="margin-top:16px;">
+            <div class="xp-label">
+              <span>次のレベルまで</span>
+              <span>${currentLevelXP} / ${xpNeededForCurrentLevel(student.level)} XP</span>
+            </div>
+            <div class="xp-bar">
+              <div class="xp-fill" style="width:${progress}%;"></div>
+            </div>
+          </div>
+
+          <div class="subject-title">今日取り組んだ教科（複数選択可）</div>
+          <div id="subjectTabs" class="subject-tabs"></div>
+          <button id="saveSubjectsBtn" class="btn-primary" style="margin-top:12px;">保存</button>
+
+          <div style="margin-top:18px;">
+            <canvas id="radarChart" width="320" height="320"></canvas>
+          </div>
+        </div>
+      `;
+
+      document.body.appendChild(overlay);
+
+      const selected = new Set();
+      const tabWrap = overlay.querySelector("#subjectTabs");
+
+      SUBJECTS.forEach(subject => {
+        const btn = document.createElement("button");
+        btn.textContent = subject;
+        btn.className = "btn-secondary";
+        btn.style.padding = "8px 12px";
+
+        btn.onclick = () => {
+          if (selected.has(subject)) {
+            selected.delete(subject);
+            btn.className = "btn-secondary";
+          } else {
+            selected.add(subject);
+            btn.className = "btn-primary";
+          }
+        };
+
+        tabWrap.appendChild(btn);
       });
 
-      addHistory(id, student.name, subjects, true, `+${XP_PER_SCAN}経験値を獲得しました。`, { source, action: 'submit' });
-      showScanResult(student, true, subjects, `+${XP_PER_SCAN}経験値を獲得しました。`);
-      clearSelectedSubjects();
-      refreshAll(false);
+      const chartCanvas = overlay.querySelector("#radarChart");
+      drawRadarChart(chartCanvas, student);
+
+      overlay.querySelector("#saveSubjectsBtn").onclick = () => {
+        selected.forEach(subject => {
+          student.subjectStats[subject] += 1;
+        });
+        saveStudents();
+        drawRadarChart(chartCanvas, student);
+
+        tabWrap.querySelectorAll("button").forEach(btn => {
+          btn.className = "btn-secondary";
+        });
+        selected.clear();
+      };
+
+      overlay.addEventListener("click", e => {
+        if (e.target === overlay) overlay.remove();
+      });
+
+      setTimeout(() => {
+        if (document.body.contains(overlay)) overlay.remove();
+      }, 10000);
     }
 
-    function processScan(decodedText) {
-      const studentId = String(decodedText).trim();
-      if (!studentId) return;
-      const lockKey = `${studentId}_${Date.now()}`;
-      if (lastScanLock && Date.now() - Number(lastScanLock.split("_")[1]) < 1500) return;
-      lastScanLock = lockKey;
-      processSubmission(studentId, 'scan');
+    function addXP(studentId) {
+      const student = students.find(s => s.id === studentId);
+      if (!student) {
+        showToast("登録されていないQRです。");
+        return;
+      }
+
+      ensureStudentStats(student);
+
+      const today = todayString();
+      if (student.lastScanDate === today) {
+        showToast(`${student.name} は今日はすでに読み取り済みです。`);
+        return;
+      }
+
+      const beforeLevel = student.level;
+
+      student.xp += 5;
+      student.level = calcLevel(student.xp);
+      student.title = getTitleByLevel(student.level);
+      student.lastScanDate = today;
+      student.history.unshift({
+        dateTime: nowString(),
+        action: "QR提出",
+        gainedXP: 5,
+        totalXP: student.xp,
+        level: student.level,
+        title: student.title
+      });
+
+      saveStudents();
+      render();
+
+      if (student.level > beforeLevel) {
+        showLevelUp(student);
+        setTimeout(() => showStudentStatus(student), 2600);
+      } else {
+        showStudentStatus(student);
+      }
     }
+
+    function render() {
+      const list = document.getElementById("studentList");
+      list.innerHTML = "";
+
+      if (getMode() !== "teacher") return;
+
+      if (students.length === 0) {
+        list.innerHTML = `<div class="small" style="color:#fff;">まだ生徒が登録されていません。</div>`;
+        return;
+      }
+
+      students.forEach(student => {
+        ensureStudentStats(student);
+
+        const title = getTitleByLevel(student.level);
+        const imageUrl = getImageByTitle(title);
+        const progress = xpProgressPercent(student.xp);
+        const currentLevelXP = xpIntoCurrentLevel(student.xp);
+        const scannedToday = student.lastScanDate === todayString() ? "済" : "未";
+
+        const historyHtml = student.history.length === 0
+          ? `<div class="small">まだ履歴はありません。</div>`
+          : `<ul class="history-list">${
+              student.history.slice(0, 20).map(h =>
+                `<li>${h.dateTime} / ${h.action} / +${h.gainedXP}XP / 合計${h.totalXP}XP / Lv.${h.level} / ${h.title}</li>`
+              ).join("")
+            }</ul>`;
+
+        const card = document.createElement("div");
+        card.className = "student-card";
+        card.innerHTML = `
+          <div class="student-top">
+            <img class="student-image" src="${imageUrl}" alt="${title}">
+            <div>
+              <h3 class="student-name">${student.name}</h3>
+              <div class="badge">${title}</div>
+              <div class="stat"><strong>レベル:</strong> Lv.${student.level}</div>
+              <div class="stat"><strong>総経験値:</strong> ${student.xp} XP</div>
+              <div class="stat"><strong>本日の読み取り:</strong> ${scannedToday}</div>
+              <div class="stat"><strong>最終読み取り日:</strong> ${student.lastScanDate || "なし"}</div>
+
+              <div class="xp-wrap">
+                <div class="xp-label">
+                  <span>次のレベルまで</span>
+                  <span>${currentLevelXP} / ${xpNeededForCurrentLevel(student.level)} XP</span>
+                </div>
+                <div class="xp-bar">
+                  <div class="xp-fill" style="width:${progress}%;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="subblock">
+            <div class="small">この生徒専用QRコード</div>
+            <canvas id="qr-${student.id}"></canvas>
+          </div>
+
+          <div class="subblock">
+            <div class="history-title">提出履歴</div>
+            ${historyHtml}
+          </div>
+
+          <div class="subblock">
+            <button class="btn-danger" onclick="deleteStudent('${student.id}')">削除</button>
+          </div>
+        `;
+
+        list.appendChild(card);
+
+        const canvas = document.getElementById(`qr-${student.id}`);
+        QRCode.toCanvas(canvas, student.id, { width: 138, margin: 1 }, function(error) {
+          if (error) console.error(error);
+        });
+      });
+    }
+
+    function exportData() {
+      const dataStr = JSON.stringify(students, null, 2);
+      const blob = new Blob([dataStr], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `submit_rpg_${getTeacherKey()}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function resetAllData() {
+      if (!confirm(`先生キー「${getTeacherKey()}」のデータを本当に全削除しますか？`)) return;
+      localStorage.removeItem(STORAGE_KEY);
+      students = [];
+      render();
+      showToast("この先生キーのデータを削除しました。");
+    }
+
+    applyModeUI();
+    render();
+
+    let scannerStarted = false;
+    const qrScanner = new Html5Qrcode("reader");
 
     async function startScanner() {
-      if (scanning) return;
-      scanner = new Html5Qrcode("reader");
+      if (scannerStarted) return;
+      scannerStarted = true;
+
       try {
-        await scanner.start(
+        await qrScanner.start(
           { facingMode: "environment" },
-          { fps: 10, qrbox: { width: 240, height: 240 } },
-          (decodedText) => processScan(decodedText),
+          { fps: 10, qrbox: 250 },
+          decodedText => {
+            addXP(decodedText);
+          },
           () => {}
         );
-        scanning = true;
-      } catch (error) {
-        console.error(error);
-        alert("カメラを開始できませんでした。iPadのカメラ許可やHTTPS環境を確認してください。");
+      } catch (err) {
+        console.error(err);
+        showToast("カメラを起動できませんでした。HTTPS環境または対応ブラウザで開いてください。");
       }
     }
 
-    async function stopScanner() {
-      if (!scanner || !scanning) return;
-      try {
-        await scanner.stop();
-        await scanner.clear();
-      } catch (error) {
-        console.error(error);
-      }
-      scanning = false;
-      scanner = null;
-      el("reader").innerHTML = "";
-    }
-
-
-    function syncRosterTextarea() {
-      const entries = Object.entries(state.roster).sort((a, b) => String(a[0]).localeCompare(String(b[0]), 'ja'));
-      el("rosterInput").value = entries.map(([id, name]) => `${id},${name}`).join("\n");
-    }
-
-    function clearStudentForm() {
-      selectedRosterId = "";
-      el("studentIdInput").value = "";
-      el("studentNameInput").value = "";
-      renderRosterManagerList();
-    }
-
-    function fillStudentForm(id) {
-      selectedRosterId = id;
-      el("studentIdInput").value = id;
-      el("studentNameInput").value = state.roster[id] || "";
-      renderRosterManagerList();
-    }
-
-    function renderRosterManagerList() {
-      const wrap = el("rosterManagerList");
-      const entries = Object.entries(state.roster).sort((a, b) => String(a[0]).localeCompare(String(b[0]), 'ja'));
-      if (!entries.length) {
-        wrap.innerHTML = `<div class="note">まだ生徒が登録されていません。</div>`;
-        return;
-      }
-      wrap.innerHTML = entries.map(([id, name]) => `
-        <div class="student-item selectable ${selectedRosterId === id ? 'active' : ''}" data-roster-id="${id}">
-          <div>
-            <div style="font-weight:800;">${name}</div>
-            <div class="small">${id}</div>
-          </div>
-          <div class="muted-badge">選択して編集</div>
-        </div>
-      `).join("");
-
-      wrap.querySelectorAll("[data-roster-id]").forEach(node => {
-        node.addEventListener("click", () => fillStudentForm(node.dataset.rosterId));
-      });
-    }
-
-    function addStudentFromForm() {
-      const id = el("studentIdInput").value.trim();
-      const name = el("studentNameInput").value.trim();
-      if (!id || !name) {
-        alert("生徒IDと名前の両方を入力してください。");
-        return;
-      }
-      if (state.roster[id]) {
-        alert("その生徒IDはすでに登録されています。更新したい場合は一覧から選んでください。");
-        return;
-      }
-      state.roster[id] = name;
-      const student = ensureStudentRecord(id);
-      student.name = name;
-      saveState();
-      clearStudentForm();
-      refreshAll();
-      alert("生徒を追加しました。");
-    }
-
-    function updateStudentFromForm() {
-      if (!selectedRosterId) {
-        alert("先に一覧から更新したい生徒を選んでください。");
-        return;
-      }
-      const nextId = el("studentIdInput").value.trim();
-      const nextName = el("studentNameInput").value.trim();
-      if (!nextId || !nextName) {
-        alert("生徒IDと名前の両方を入力してください。");
-        return;
-      }
-      if (nextId !== selectedRosterId && state.roster[nextId]) {
-        alert("変更後の生徒IDはすでに使われています。");
-        return;
-      }
-
-      const existingStudent = state.students[selectedRosterId];
-      delete state.roster[selectedRosterId];
-
-      if (existingStudent) {
-        state.students[nextId] = existingStudent;
-        state.students[nextId].id = nextId;
-        state.students[nextId].name = nextName;
-        if (nextId !== selectedRosterId) delete state.students[selectedRosterId];
-      }
-
-      state.roster[nextId] = nextName;
-      ensureStudentRecord(nextId).name = nextName;
-
-      state.history.forEach(h => {
-        if (h.studentId === selectedRosterId) {
-          h.studentId = nextId;
-          h.studentName = nextName;
-        }
-      });
-
-      saveState();
-      selectedRosterId = nextId;
-      refreshAll();
-      fillStudentForm(nextId);
-      alert("生徒情報を更新しました。");
-    }
-
-    function deleteStudentFromForm() {
-      if (!selectedRosterId) {
-        alert("先に一覧から削除したい生徒を選んでください。");
-        return;
-      }
-      const name = state.roster[selectedRosterId] || selectedRosterId;
-      if (!confirm(`${name} を名簿から削除します。よろしいですか？\n過去の履歴は残ります。`)) return;
-
-      delete state.roster[selectedRosterId];
-      delete state.students[selectedRosterId];
-      saveState();
-      clearStudentForm();
-      refreshAll();
-      alert("生徒を削除しました。");
-    }
-
-    function parseRoster(text) {
-      const lines = text
-        .replace(/^﻿/, "")
-        .split(/\r?\n/)
-        .map(v => v.trim())
-        .filter(Boolean);
-
-      const roster = {};
-      lines.forEach(line => {
-        const normalized = line.replace(/　/g, " ").trim();
-        const parts = normalized.includes(",")
-          ? normalized.split(",")
-          : normalized.includes("，")
-            ? normalized.split("，")
-            : normalized.split(/\t+/);
-
-        const id = (parts.shift() || "").trim();
-        const name = parts.join(",").trim();
-        if (!id || !name) return;
-        roster[id] = name;
-      });
-      return roster;
-    }
-
-    function saveRoster() {
-      const roster = parseRoster(el("rosterInput").value);
-      if (!Object.keys(roster).length) {
-        alert("名簿を読み取れませんでした。1行に1人ずつ『生徒ID,名前』の形で入力してください。全角カンマにも対応しています。");
-        return;
-      }
-      state.roster = roster;
-      Object.keys(roster).forEach(id => {
-        const student = ensureStudentRecord(id);
-        student.name = roster[id];
-      });
-      selectedRosterId = "";
-      saveState();
-      refreshAll();
-      syncRosterTextarea();
-      alert("名簿を保存しました。QRコードも更新しました。");
-    }
-
-    function loadSample() {
-      el("rosterInput").value = [
-        "2026001,山田 太郎",
-        "2026002,佐藤 花子",
-        "2026003,田中 一郎",
-        "2026004,伊藤 未来"
-      ].join("\n");
-    }
-
-    function downloadJson() {
-      const blob = new Blob([JSON.stringify({ teacherKey, state }, null, 2)], { type: "application/json" });
-      const a = document.createElement("a");
-      a.href = URL.createObjectURL(blob);
-      a.download = `submission-quest-${teacherKey}.json`;
-      a.click();
-      URL.revokeObjectURL(a.href);
-    }
-
-    function exportCsv() {
-      const rows = [
-        ["日時", "日付キー", "生徒ID", "生徒名", "教科", "成功", "操作", "メッセージ"],
-        ...state.history.map(h => [h.timestamp, h.dateKey, h.studentId, h.studentName, (h.subjects || []).join("/"), h.success ? "1" : "0", h.action || "", h.message])
-      ];
-      const csv = rows.map(r => r.map(v => `"${String(v).replaceAll('"', '""')}"`).join(",")).join("\n");
-      const blob = new Blob(["\ufeff" + csv], { type: "text/csv;charset=utf-8;" });
-      const a = document.createElement("a");
-      a.href = URL.createObjectURL(blob);
-      a.download = `submission-history-${teacherKey}.csv`;
-      a.click();
-      URL.revokeObjectURL(a.href);
-    }
-
-    function clearHistory() {
-      if (!confirm("履歴だけを消しますか？ 生徒データと名簿は残ります。")) return;
-      state.history = [];
-      state.subjectCounts = Object.fromEntries(SUBJECTS.map(s => [s, 0]));
-      Object.values(state.students).forEach(student => {
-        student.scanDates = [];
-        student.totalSubmissions = 0;
-        student.xp = 0;
-        student.subjectCounts = Object.fromEntries(SUBJECTS.map(s => [s, 0]));
-      });
-      saveState();
-      refreshAll();
-    }
-
-    function changeTeacherKey() {
-      const nextKey = el("teacherKey").value.trim() || "default";
-      teacherKey = nextKey;
-      state = loadState();
-      refreshAll();
-    }
-
-    function resetTeacherData() {
-      if (!confirm(`先生キー「${teacherKey}」のデータをすべて初期化します。よろしいですか？`)) return;
-      localStorage.removeItem(storageKey());
-      state = defaultState();
-      refreshAll();
-    }
-
-    function renderManualStudentSelect() {
-      const entries = Object.entries(state.roster);
-      if (!entries.length) {
-        el("manualStudentSelect").innerHTML = `<option value="">先に名簿を登録してください</option>`;
-        return;
-      }
-      el("manualStudentSelect").innerHTML = [`<option value="">生徒を選ぶ</option>`, ...entries.map(([id, name]) => `<option value="${id}">${name} (${id})</option>`)].join("");
-    }
-
-    function renderUnsubmittedList() {
-      const subject = el("unsubmittedSubjectFilter").value || 'all';
-      const ids = unsubmittedStudentIds(subject);
-      const wrap = el("unsubmittedList");
-      if (!Object.keys(state.roster).length) {
-        wrap.innerHTML = `<div class="note">先に名簿を登録してください。</div>`;
-        return;
-      }
-      if (!ids.length) {
-        wrap.innerHTML = `<div class="ok-badge">今日は全員提出済みです。</div>`;
-        return;
-      }
-      wrap.innerHTML = ids.map(id => `
-        <div class="student-item">
-          <div><strong>${state.roster[id] || id}</strong><div class="small">${id}</div></div>
-          <button class="btn-secondary" onclick="quickManualSubmit('${id}')">この生徒を記録</button>
-        </div>`).join("");
-    }
-
-    function lastSuccessRecord() { return state.history.slice().reverse().find(h => h.success && h.action === 'submit'); }
-
-    function renderLastSuccessInfo() {
-      const last = lastSuccessRecord();
-      const box = el("lastSuccessInfo");
-      if (!last) {
-        box.innerHTML = `<div class="note">まだ取り消しできる提出はありません。</div>`;
-        return;
-      }
-      box.innerHTML = `
-        <div><strong>${last.studentName}</strong> <span class="small">${last.studentId}</span></div>
-        <div class="small">${last.timestamp}</div>
-        <div style="margin-top:8px;">教科: ${(last.subjects || []).join('、') || '-'}</div>
-        <div class="small" style="margin-top:6px;">${last.message}</div>`;
-    }
-
-    function undoLastSubmission() {
-      const last = lastSuccessRecord();
-      if (!last) {
-        alert("取り消せる提出がありません。");
-        return;
-      }
-      if (!confirm(`「${last.studentName}」の直前の提出を取り消しますか？`)) return;
-      const student = ensureStudentRecord(last.studentId);
-      student.xp = Math.max(0, student.xp - XP_PER_SCAN);
-      student.totalSubmissions = Math.max(0, (student.totalSubmissions || 0) - 1);
-      student.scanDates = (student.scanDates || []).filter(d => d !== last.dateKey);
-      (last.subjects || []).forEach(subject => {
-        state.subjectCounts[subject] = Math.max(0, (state.subjectCounts[subject] || 0) - 1);
-        student.subjectCounts[subject] = Math.max(0, (student.subjectCounts[subject] || 0) - 1);
-      });
-      const idx = state.history.lastIndexOf(last);
-      if (idx >= 0) state.history.splice(idx, 1);
-      addHistory(last.studentId, last.studentName, last.subjects || [], false, "直前の提出を取り消しました。", { action: 'undo', source: 'system' });
-      saveState();
-      refreshAll(false);
-      showScanResult(student, false, last.subjects || [], "直前の提出を取り消しました。");
-    }
-
-    function printQrCards() { window.print(); }
-
-    function switchScreen(mode) {
-      currentScreen = mode === 'teacher' ? 'teacher' : 'student';
-      localStorage.setItem(`${STORAGE_PREFIX}_screenMode`, currentScreen);
-      el('studentScreen').classList.toggle('active', currentScreen === 'student');
-      el('teacherScreen').classList.toggle('active', currentScreen === 'teacher');
-      el('showStudentBtn').classList.toggle('active', currentScreen === 'student');
-      el('showTeacherBtn').classList.toggle('active', currentScreen === 'teacher');
-    }
-
-    function refreshAll(save = true) {
-      if (save) saveState();
-      el("teacherKey").value = teacherKey;
-      syncRosterTextarea();
-      renderSummary();
-      renderHistory();
-      renderChart();
-      renderQrCards();
-      renderManualStudentSelect();
-      renderUnsubmittedList();
-      renderLastSuccessInfo();
-      renderRosterManagerList();
-    }
-
-    function bindEvents() {
-      el("showStudentBtn").addEventListener("click", () => switchScreen('student'));
-      el("showTeacherBtn").addEventListener("click", () => switchScreen('teacher'));
-      el("startScanBtn").addEventListener("click", startScanner);
-      el("stopScanBtn").addEventListener("click", stopScanner);
-      el("saveRosterBtn").addEventListener("click", saveRoster);
-      el("loadSampleBtn").addEventListener("click", loadSample);
-      el("downloadDataBtn").addEventListener("click", downloadJson);
-      el("addStudentBtn").addEventListener("click", addStudentFromForm);
-      el("updateStudentBtn").addEventListener("click", updateStudentFromForm);
-      el("deleteStudentBtn").addEventListener("click", deleteStudentFromForm);
-      el("clearStudentFormBtn").addEventListener("click", clearStudentForm);
-      el("exportCsvBtn").addEventListener("click", exportCsv);
-      el("clearHistoryBtn").addEventListener("click", clearHistory);
-      el("saveTeacherKeyBtn").addEventListener("click", changeTeacherKey);
-      el("resetTeacherDataBtn").addEventListener("click", resetTeacherData);
-      el("manualSubmitBtn").addEventListener("click", () => {
-        const id = el("manualStudentSelect").value;
-        if (!id) { alert("生徒を選んでください。"); return; }
-        processSubmission(id, 'manual');
-      });
-      el("undoLastBtn").addEventListener("click", undoLastSubmission);
-      el("printQrBtn").addEventListener("click", printQrCards);
-      el("refreshUnsubmittedBtn").addEventListener("click", renderUnsubmittedList);
-      el("unsubmittedSubjectFilter").addEventListener("change", renderUnsubmittedList);
-    }
-
-    window.quickManualSubmit = function(id) { processSubmission(id, 'manual-quick'); }
-
-    function init() {
-      renderSubjectChips();
-      bindEvents();
-      switchScreen(currentScreen);
-      refreshAll();
-    }
-
-    init();
+    startScanner();
   </script>
 </body>
 </html>
