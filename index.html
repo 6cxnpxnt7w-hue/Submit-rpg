@@ -1,1004 +1,191 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>提出RPG</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>提出RPG</title>
 
-  <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
-  <script src="https://unpkg.com/html5-qrcode"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+<script src="https://unpkg.com/html5-qrcode"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-  <style>
-    :root {
-      --bg-night: #0b1020;
-      --bg-deep: #131a34;
-      --bg-panel: rgba(12, 18, 38, 0.78);
-      --card: #ffffff;
-      --text: #12213d;
-      --muted: #60708d;
-      --accent: #4f46e5;
-      --accent2: #7c3aed;
-      --gold: #fbbf24;
-      --good: #16a34a;
-      --warn: #d97706;
-      --danger: #dc2626;
-      --line: #d9e2f2;
-      --shadow: 0 14px 30px rgba(2, 8, 23, 0.24);
-      --radius: 18px;
-    }
-
-    * { box-sizing: border-box; }
-    html, body { margin: 0; min-height: 100%; }
-
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", "Noto Sans JP", sans-serif;
-      color: #eef2ff;
-      background:
-        radial-gradient(circle at 20% 10%, rgba(124,58,237,.26), transparent 24%),
-        radial-gradient(circle at 80% 10%, rgba(59,130,246,.24), transparent 25%),
-        linear-gradient(180deg, #0b1020 0%, #0f172a 45%, #111827 100%);
-      padding: 20px;
-    }
-
-    .mode-switch {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      margin-top: 12px;
-    }
-
-    .app {
-      max-width: 1100px;
-      margin: 0 auto;
-    }
-
-    .hero {
-      background: linear-gradient(135deg, rgba(79,70,229,.35), rgba(15,23,42,.65));
-      border: 1px solid rgba(255,255,255,.12);
-      border-radius: 28px;
-      padding: 22px;
-      box-shadow: var(--shadow);
-      margin-bottom: 16px;
-    }
-
-    .hero h1 {
-      margin: 0 0 8px;
-      font-size: 32px;
-      color: #fff7d6;
-    }
-
-    .hero p {
-      margin: 0;
-      color: #f8fafc;
-      line-height: 1.8;
-      font-size: 15px;
-    }
-
-    .section {
-      background: var(--bg-panel);
-      border: 1px solid rgba(255,255,255,.10);
-      border-radius: 22px;
-      padding: 18px;
-      box-shadow: var(--shadow);
-      margin-bottom: 16px;
-      backdrop-filter: blur(8px);
-    }
-
-    .section h2 {
-      margin: 0 0 12px;
-      color: #fff7d6;
-      font-size: 22px;
-    }
-
-    .notice {
-      color: #e5edff;
-      font-size: 14px;
-      line-height: 1.8;
-    }
-
-    .row {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      align-items: center;
-    }
-
-    input {
-      flex: 1;
-      min-width: 220px;
-      padding: 12px 14px;
-      border-radius: 14px;
-      border: 1px solid rgba(255,255,255,.18);
-      background: rgba(255,255,255,.08);
-      color: #fff;
-      font-size: 16px;
-      outline: none;
-    }
-
-    input::placeholder {
-      color: #dbeafe;
-    }
-
-    button {
-      border: none;
-      border-radius: 14px;
-      padding: 11px 15px;
-      font-size: 15px;
-      font-weight: 700;
-      cursor: pointer;
-      color: #fff;
-      transition: transform .15s ease, opacity .15s ease;
-    }
-
-    button:hover {
-      transform: translateY(-1px);
-      opacity: .96;
-    }
-
-    .btn-primary {
-      background: linear-gradient(135deg, #2563eb, #1d4ed8);
-    }
-
-    .btn-secondary {
-      background: linear-gradient(135deg, #64748b, #475569);
-    }
-
-    .btn-danger {
-      background: linear-gradient(135deg, #ef4444, #be123c);
-    }
-
-    #reader {
-      width: 340px;
-      max-width: 100%;
-      margin: 0 auto;
-      overflow: hidden;
-      border-radius: 18px;
-      border: 2px solid rgba(251,191,36,.45);
-      box-shadow: 0 0 0 6px rgba(251,191,36,.08);
-      background: rgba(255,255,255,.03);
-    }
-
-    .student-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
-      gap: 16px;
-    }
-
-    .student-card {
-      background: #f8fbff;
-      border: 1px solid var(--line);
-      border-radius: 20px;
-      padding: 16px;
-      color: var(--text);
-    }
-
-    .student-top {
-      display: flex;
-      gap: 14px;
-      align-items: center;
-      margin-bottom: 12px;
-    }
-
-    .student-image {
-      width: 112px;
-      height: 112px;
-      object-fit: cover;
-      border-radius: 18px;
-      border: 2px solid #e6eefb;
-      background: #e5e7eb;
-      flex-shrink: 0;
-    }
-
-    .student-name {
-      margin: 0 0 6px;
-      font-size: 22px;
-      color: #172554;
-    }
-
-    .badge {
-      display: inline-block;
-      padding: 6px 10px;
-      border-radius: 999px;
-      background: linear-gradient(135deg, rgba(251,191,36,.22), rgba(124,58,237,.18));
-      color: #1e3a8a;
-      font-size: 12px;
-      font-weight: 700;
-      margin-bottom: 6px;
-      border: 1px solid #e5e7eb;
-    }
-
-    .stat {
-      font-size: 14px;
-      color: #334155;
-      line-height: 1.7;
-    }
-
-    .xp-wrap {
-      margin-top: 10px;
-    }
-
-    .xp-label {
-      display: flex;
-      justify-content: space-between;
-      font-size: 13px;
-      color: #334155;
-      margin-bottom: 6px;
-    }
-
-    .xp-bar {
-      height: 12px;
-      border-radius: 999px;
-      background: #e2e8f0;
-      overflow: hidden;
-      border: 1px solid #d6deea;
-    }
-
-    .xp-fill {
-      height: 100%;
-      background: linear-gradient(90deg, #fbbf24, #f59e0b);
-      border-radius: 999px;
-    }
-
-    .subblock {
-      margin-top: 12px;
-      padding-top: 12px;
-      border-top: 1px solid #e2e8f0;
-    }
-
-    .small {
-      font-size: 13px;
-      color: #475569;
-      line-height: 1.7;
-    }
-
-    .history-title {
-      font-size: 14px;
-      font-weight: 700;
-      color: #1e293b;
-      margin-bottom: 8px;
-    }
-
-    .history-list {
-      margin: 0;
-      padding-left: 18px;
-      color: #334155;
-      font-size: 13px;
-      line-height: 1.8;
-      max-height: 220px;
-      overflow: auto;
-    }
-
-    .overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(2, 6, 23, 0.82);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 9999;
-      padding: 20px;
-    }
-
-    .overlay-box {
-      width: min(95vw, 580px);
-      background: linear-gradient(180deg, rgba(30,41,59,.98), rgba(15,23,42,.98));
-      border: 2px solid rgba(251,191,36,.55);
-      border-radius: 24px;
-      padding: 22px 18px;
-      text-align: center;
-      box-shadow: 0 22px 48px rgba(0,0,0,.45);
-      color: #fff;
-    }
-
-    .overlay-title {
-      font-size: 28px;
-      font-weight: 800;
-      color: #fff7d6;
-      margin: 0 0 10px;
-    }
-
-    .overlay-sub {
-      font-size: 20px;
-      font-weight: 700;
-      margin-bottom: 14px;
-      color: #fff;
-    }
-
-    .overlay-image {
-      width: 180px;
-      height: 180px;
-      object-fit: cover;
-      border-radius: 22px;
-      border: 2px solid rgba(251,191,36,.6);
-      background: #475569;
-      margin-bottom: 14px;
-    }
-
-    .overlay-text {
-      font-size: 16px;
-      line-height: 1.8;
-      color: #fff;
-    }
-
-    .subject-title {
-      text-align: left;
-      margin: 18px 0 8px;
-      font-weight: 700;
-      color: #fff;
-    }
-
-    .subject-tabs {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      justify-content: flex-start;
-    }
-
-    .teacher-key-box {
-      margin-top: 8px;
-      color: #fff;
-      font-size: 14px;
-      line-height: 1.8;
-    }
-
-    a.mode-link {
-      color: #fde68a;
-      word-break: break-all;
-    }
-
-    @media (max-width: 700px) {
-      body { padding: 14px; }
-      .hero h1 { font-size: 27px; }
-      .student-top { align-items: flex-start; }
-      .student-image { width: 96px; height: 96px; }
-      .overlay-image { width: 150px; height: 150px; }
-    }
-  </style>
+<style>
+body{
+  font-family:sans-serif;
+  background:#0f172a;
+  color:white;
+  padding:20px;
+}
+.card{
+  background:#1e293b;
+  padding:20px;
+  border-radius:20px;
+  margin-bottom:20px;
+}
+button{
+  padding:10px 15px;
+  border:none;
+  border-radius:10px;
+  background:#2563eb;
+  color:white;
+  margin:5px;
+}
+input{
+  padding:10px;
+  border-radius:10px;
+  border:none;
+}
+img{
+  width:180px;
+  border-radius:20px;
+}
+</style>
 </head>
 <body>
-  <div class="app">
-    <div class="hero">
-      <h1>提出RPG</h1>
-      <p>
-        QRコードを読み取ると経験値が5ポイント増えます。<br>
-        読み取り後に称号画像・レベル・教科選択・六角形グラフが表示されます。<br>
-        先生ごとにURLを分けることで、データを分離できます。
-      </p>
-      <div class="mode-switch">
-        <button class="btn-primary" onclick="openMode('student')">生徒モード</button>
-        <button class="btn-secondary" onclick="openMode('teacher')">先生モード</button>
-      </div>
+
+<div class="card">
+  <h1>提出RPG</h1>
+  <input id="studentName" placeholder="生徒名">
+  <button onclick="addStudent()">追加</button>
+</div>
+
+<div class="card">
+  <h2>QR読み取り</h2>
+  <div id="reader" style="width:300px"></div>
+</div>
+
+<div class="card">
+  <h2>生徒一覧</h2>
+  <div id="studentList"></div>
+</div>
+
+<script>
+const images = {
+  villager: "https://i.imgur.com/3VesM2P.jpeg",
+  adventurer: "https://i.imgur.com/GQwA5bP.jpeg",
+  warrior: "https://i.imgur.com/WQh0q3g.jpeg",
+  hero: "https://i.imgur.com/x5qY6hV.jpeg",
+  sage: "https://i.imgur.com/4rA7kJd.jpeg",
+  legend: "https://i.imgur.com/k0kqTlf.jpeg"
+};
+
+let students = JSON.parse(localStorage.getItem("students") || "[]");
+
+function titleByLevel(level){
+  if(level>=10) return ["伝説の勇者",images.legend];
+  if(level>=8) return ["賢者",images.sage];
+  if(level>=6) return ["勇者",images.hero];
+  if(level>=4) return ["戦士",images.warrior];
+  if(level>=2) return ["冒険者",images.adventurer];
+  return ["村人",images.villager];
+}
+
+function save(){
+  localStorage.setItem("students",JSON.stringify(students));
+}
+
+function addStudent(){
+  const name=document.getElementById("studentName").value;
+  const id=crypto.randomUUID();
+
+  students.push({
+    id,
+    name,
+    xp:0,
+    level:1,
+    lastScan:"",
+    subjects:{
+      数学:0,
+      理科:0,
+      社会:0,
+      英語:0,
+      国語:0,
+      その他:0
+    }
+  });
+
+  save();
+  render();
+}
+
+function addXP(id){
+  const s=students.find(x=>x.id===id);
+  const today=new Date().toDateString();
+
+  if(s.lastScan===today){
+    alert("今日は読み取り済み");
+    return;
+  }
+
+  s.xp+=5;
+  s.level=Math.floor(s.xp/20)+1;
+  s.lastScan=today;
+
+  save();
+  render();
+  showStatus(s);
+}
+
+function showStatus(student){
+  const [title,img]=titleByLevel(student.level);
+
+  const div=document.createElement("div");
+  div.style.position="fixed";
+  div.style.inset="0";
+  div.style.background="rgba(0,0,0,0.8)";
+  div.style.display="flex";
+  div.style.alignItems="center";
+  div.style.justifyContent="center";
+  div.innerHTML=`
+    <div style="background:#1e293b;padding:30px;border-radius:20px;text-align:center;">
+      <img src="${img}">
+      <h2>${student.name}</h2>
+      <h3>Lv.${student.level}</h3>
+      <h3>${title}</h3>
     </div>
+  `;
+  document.body.appendChild(div);
+
+  setTimeout(()=>div.remove(),10000);
+}
+
+function render(){
+  const list=document.getElementById("studentList");
+  list.innerHTML="";
+
+  students.forEach(s=>{
+    const [title,img]=titleByLevel(s.level);
+
+    const div=document.createElement("div");
+    div.className="card";
+    div.innerHTML=`
+      <img src="${img}">
+      <h3>${s.name}</h3>
+      <p>Lv.${s.level}</p>
+      <p>${title}</p>
+      <p>${s.xp} XP</p>
+      <canvas id="qr-${s.id}"></canvas>
+    `;
+
+    list.appendChild(div);
+
+    QRCode.toCanvas(
+      document.getElementById(`qr-${s.id}`),
+      s.id,
+      {width:120}
+    );
+  });
+}
+
+render();
+
+const scanner=new Html5Qrcode("reader");
+scanner.start(
+  {facingMode:"environment"},
+  {fps:10,qrbox:250},
+  text=>addXP(text)
+);
+</script>
 
-    <div class="section" id="teacherUrlSection">
-      <h2>先生専用URL作成</h2>
-      <div class="row">
-        <input id="teacherNameInput" placeholder="先生名またはクラス名を入力（例：3A）" />
-        <button class="btn-primary" onclick="generateTeacherUrl()">専用URLを作成</button>
-      </div>
-      <div id="generatedUrlBox" class="notice" style="margin-top:10px;"></div>
-    </div>
-
-    <div class="section">
-      <h2 id="modeTitle">モード表示</h2>
-      <div id="modeDescription" class="notice"></div>
-      <div class="teacher-key-box">
-        現在の先生キー: <strong id="teacherKeyDisplay"></strong>
-      </div>
-    </div>
-
-    <div class="section" id="teacherRegistrationSection">
-      <h2>① 生徒登録</h2>
-      <div class="row">
-        <input id="nameInput" placeholder="生徒名を入力" />
-        <button class="btn-primary" onclick="addStudent()">追加</button>
-        <button class="btn-secondary" onclick="exportData()">データを書き出し</button>
-        <button class="btn-danger" onclick="resetAllData()">全データ削除</button>
-      </div>
-      <div class="notice">この先生キーの中だけで、生徒データ・経験値・履歴・教科記録が保存されます。</div>
-    </div>
-
-    <div class="section" id="scannerSection">
-      <h2>② QR読み取り</h2>
-      <div id="reader"></div>
-      <div class="notice">同じ生徒は1日1回しかQRで加点されません。</div>
-    </div>
-
-    <div class="section" id="teacherListSection">
-      <h2>③ 生徒一覧</h2>
-      <div id="studentList" class="student-grid"></div>
-    </div>
-  </div>
-
-  <script>
-    function getMode() {
-      const params = new URLSearchParams(window.location.search);
-      return params.get("mode") === "teacher" ? "teacher" : "student";
-    }
-
-    function getTeacherKey() {
-      const params = new URLSearchParams(window.location.search);
-      return params.get("teacher") || "default";
-    }
-
-    const STORAGE_KEY = `submit_rpg_${getTeacherKey()}`;
-
-    const SUBJECTS = ["数学", "理科", "社会", "英語", "国語", "その他"];
-
-    const titleImageMap = {
-      "村人": "villager.jpg",
-      "冒険者": "adventurer.jpg",
-      "戦士": "warrior.jpg",
-      "勇者": "hero.jpg",
-      "賢者": "sage.jpg",
-      "伝説の勇者": "legendary_hero.jpg"
-    };
-
-    let students = loadStudents();
-
-    function openMode(mode) {
-      const teacher = encodeURIComponent(getTeacherKey());
-      location.href = `${window.location.pathname}?mode=${mode}&teacher=${teacher}`;
-    }
-
-    function generateTeacherUrl() {
-      const input = document.getElementById("teacherNameInput");
-      const teacherName = input.value.trim();
-
-      if (!teacherName) {
-        alert("先生名またはクラス名を入力してください。");
-        return;
-      }
-
-      const encodedName = encodeURIComponent(teacherName);
-      const teacherUrl = `${window.location.origin}${window.location.pathname}?mode=teacher&teacher=${encodedName}`;
-      const studentUrl = `${window.location.origin}${window.location.pathname}?mode=student&teacher=${encodedName}`;
-
-      document.getElementById("generatedUrlBox").innerHTML = `
-        <div><strong>先生用URL</strong></div>
-        <a class="mode-link" href="${teacherUrl}" target="_blank">${teacherUrl}</a>
-        <div style="margin-top:8px;"><strong>生徒用URL</strong></div>
-        <a class="mode-link" href="${studentUrl}" target="_blank">${studentUrl}</a>
-      `;
-    }
-
-    function loadStudents() {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) return [];
-      try {
-        const parsed = JSON.parse(raw);
-        return Array.isArray(parsed) ? parsed : [];
-      } catch (e) {
-        return [];
-      }
-    }
-
-    function saveStudents() {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(students));
-    }
-
-    function todayString() {
-      const d = new Date();
-      const y = d.getFullYear();
-      const m = String(d.getMonth() + 1).padStart(2, "0");
-      const day = String(d.getDate()).padStart(2, "0");
-      return `${y}-${m}-${day}`;
-    }
-
-    function nowString() {
-      const d = new Date();
-      const y = d.getFullYear();
-      const m = String(d.getMonth() + 1).padStart(2, "0");
-      const day = String(d.getDate()).padStart(2, "0");
-      const h = String(d.getHours()).padStart(2, "0");
-      const min = String(d.getMinutes()).padStart(2, "0");
-      const s = String(d.getSeconds()).padStart(2, "0");
-      return `${y}-${m}-${day} ${h}:${min}:${s}`;
-    }
-
-    function getThresholds() {
-      return [0, 20, 45, 75, 110, 150, 200, 260, 330, 410, 500, 600];
-    }
-
-    function calcLevel(xp) {
-      const thresholds = getThresholds();
-      for (let i = thresholds.length - 1; i >= 0; i--) {
-        if (xp >= thresholds[i]) return i + 1;
-      }
-      return 1;
-    }
-
-    function getTitleByLevel(level) {
-      if (level >= 12) return "伝説の勇者";
-      if (level >= 11) return "大賢者";
-      if (level >= 10) return "賢者";
-      if (level >= 9) return "英雄";
-      if (level >= 8) return "勇者";
-      if (level >= 7) return "上級戦士";
-      if (level >= 6) return "戦士";
-      if (level >= 5) return "熟練冒険者";
-      if (level >= 4) return "冒険者";
-      if (level >= 3) return "新米冒険者";
-      if (level >= 2) return "見習い";
-      return "村人";
-    }
-
-    function getImageByTitle(title) {
-      if (title.includes("伝説の勇者")) return titleImageMap["伝説の勇者"];
-      if (title.includes("賢者")) return titleImageMap["賢者"];
-      if (title.includes("勇者")) return titleImageMap["勇者"];
-      if (title.includes("戦士")) return titleImageMap["戦士"];
-      if (title.includes("冒険者")) return titleImageMap["冒険者"];
-      return titleImageMap["村人"];
-    }
-
-    function getCurrentLevelStartXP(level) {
-      const thresholds = getThresholds();
-      return thresholds[Math.max(0, level - 1)] ?? thresholds[thresholds.length - 1];
-    }
-
-    function getNextLevelXP(level) {
-      const thresholds = getThresholds();
-      return thresholds[level] ?? null;
-    }
-
-    function xpIntoCurrentLevel(xp) {
-      const level = calcLevel(xp);
-      const startXP = getCurrentLevelStartXP(level);
-      return xp - startXP;
-    }
-
-    function xpNeededForCurrentLevel(level) {
-      const startXP = getCurrentLevelStartXP(level);
-      const nextXP = getNextLevelXP(level);
-      if (nextXP === null) return 0;
-      return nextXP - startXP;
-    }
-
-    function xpProgressPercent(xp) {
-      const level = calcLevel(xp);
-      const needed = xpNeededForCurrentLevel(level);
-      if (needed === 0) return 100;
-      return (xpIntoCurrentLevel(xp) / needed) * 100;
-    }
-
-    function createEmptySubjectStats() {
-      return {
-        "数学": 0,
-        "理科": 0,
-        "社会": 0,
-        "英語": 0,
-        "国語": 0,
-        "その他": 0
-      };
-    }
-
-    function ensureStudentStats(student) {
-      if (!student.subjectStats) {
-        student.subjectStats = createEmptySubjectStats();
-      }
-      SUBJECTS.forEach(subject => {
-        if (typeof student.subjectStats[subject] !== "number") {
-          student.subjectStats[subject] = 0;
-        }
-      });
-    }
-
-    function applyModeUI() {
-      const modeTitle = document.getElementById("modeTitle");
-      const modeDescription = document.getElementById("modeDescription");
-      const teacherRegistrationSection = document.getElementById("teacherRegistrationSection");
-      const teacherListSection = document.getElementById("teacherListSection");
-      const teacherUrlSection = document.getElementById("teacherUrlSection");
-      const teacherKeyDisplay = document.getElementById("teacherKeyDisplay");
-      const scannerTitle = document.querySelector("#scannerSection h2");
-
-      teacherKeyDisplay.textContent = getTeacherKey();
-
-      if (getMode() === "teacher") {
-        modeTitle.textContent = "先生モード";
-        modeDescription.innerHTML = "生徒登録・一覧確認・削除・データ書き出しができます。<br>先生キーが違えば、別クラスとしてデータが分かれます。";
-        teacherRegistrationSection.style.display = "";
-        teacherListSection.style.display = "";
-        teacherUrlSection.style.display = "";
-        scannerTitle.textContent = "② QR読み取り（先生確認用）";
-      } else {
-        modeTitle.textContent = "生徒モード";
-        modeDescription.innerHTML = "QR読み取りと、読み取り後のステータス表示だけが使えます。<br>生徒登録や一覧は表示されません。";
-        teacherRegistrationSection.style.display = "none";
-        teacherListSection.style.display = "none";
-        teacherUrlSection.style.display = "none";
-        scannerTitle.textContent = "① QR読み取り";
-      }
-    }
-
-    function addStudent() {
-      if (getMode() !== "teacher") return;
-
-      const input = document.getElementById("nameInput");
-      const name = input.value.trim();
-
-      if (!name) {
-        alert("名前を入力してください。");
-        return;
-      }
-
-      if (students.some(s => s.name === name)) {
-        alert("同じ名前の生徒がすでに登録されています。");
-        return;
-      }
-
-      const student = {
-        id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now() + Math.random()),
-        name,
-        xp: 0,
-        level: 1,
-        title: "村人",
-        lastScanDate: "",
-        history: [],
-        subjectStats: createEmptySubjectStats()
-      };
-
-      students.push(student);
-      saveStudents();
-      render();
-      input.value = "";
-    }
-
-    function deleteStudent(id) {
-      if (!confirm("この生徒を削除しますか？")) return;
-      students = students.filter(s => s.id !== id);
-      saveStudents();
-      render();
-    }
-
-    function showToast(message) {
-      const wrap = document.createElement("div");
-      wrap.className = "overlay";
-      wrap.style.background = "rgba(2, 6, 23, 0.55)";
-      wrap.innerHTML = `
-        <div class="overlay-box" style="width:min(88vw,360px);padding:18px 16px;">
-          <div class="overlay-title" style="font-size:22px;">通知</div>
-          <div class="overlay-text">${message}</div>
-        </div>
-      `;
-      document.body.appendChild(wrap);
-      setTimeout(() => {
-        if (document.body.contains(wrap)) wrap.remove();
-      }, 1200);
-    }
-
-    function showLevelUp(student) {
-      const title = getTitleByLevel(student.level);
-      const imageUrl = getImageByTitle(title);
-
-      const overlay = document.createElement("div");
-      overlay.className = "overlay";
-      overlay.innerHTML = `
-        <div class="overlay-box">
-          <div class="overlay-title">⭐ LEVEL UP! ⭐</div>
-          <div class="overlay-sub">${student.name}</div>
-          <img class="overlay-image" src="${imageUrl}" alt="${title}">
-          <div class="overlay-text">
-            Lv.${student.level} に到達！<br>
-            新しい称号は <strong>${title}</strong>。
-          </div>
-        </div>
-      `;
-      document.body.appendChild(overlay);
-
-      overlay.addEventListener("click", () => overlay.remove());
-
-      setTimeout(() => {
-        if (document.body.contains(overlay)) overlay.remove();
-      }, 2600);
-    }
-
-    function drawRadarChart(canvas, student) {
-      ensureStudentStats(student);
-
-      const existingChart = Chart.getChart(canvas);
-      if (existingChart) existingChart.destroy();
-
-      new Chart(canvas, {
-        type: "radar",
-        data: {
-          labels: SUBJECTS,
-          datasets: [{
-            label: "家庭学習累計",
-            data: SUBJECTS.map(subject => student.subjectStats[subject]),
-            fill: true,
-            backgroundColor: "rgba(59, 130, 246, 0.28)",
-            borderColor: "rgba(251, 191, 36, 0.95)",
-            pointBackgroundColor: "rgba(251, 191, 36, 1)",
-            pointBorderColor: "#fff",
-            pointHoverBackgroundColor: "#fff",
-            pointHoverBorderColor: "rgba(251, 191, 36, 1)"
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: true,
-          scales: {
-            r: {
-              beginAtZero: true,
-              suggestedMax: Math.max(3, ...SUBJECTS.map(subject => student.subjectStats[subject] + 1)),
-              angleLines: { color: "rgba(255,255,255,0.20)" },
-              grid: { color: "rgba(255,255,255,0.20)" },
-              pointLabels: {
-                color: "#ffffff",
-                font: { size: 13 }
-              },
-              ticks: {
-                color: "#ffffff",
-                backdropColor: "transparent",
-                stepSize: 1
-              }
-            }
-          },
-          plugins: {
-            legend: {
-              labels: { color: "#ffffff" }
-            }
-          }
-        }
-      });
-    }
-
-    function showStudentStatus(student) {
-      ensureStudentStats(student);
-
-      const title = getTitleByLevel(student.level);
-      const imageUrl = getImageByTitle(title);
-      const currentLevelXP = xpIntoCurrentLevel(student.xp);
-      const progress = xpProgressPercent(student.xp);
-
-      const overlay = document.createElement("div");
-      overlay.className = "overlay";
-      overlay.innerHTML = `
-        <div class="overlay-box">
-          <div class="overlay-title">${student.name}</div>
-          <div class="overlay-sub">${title}</div>
-          <img class="overlay-image" src="${imageUrl}" alt="${title}">
-          <div class="overlay-text">
-            レベル：<strong>Lv.${student.level}</strong><br>
-            称号：<strong>${title}</strong><br>
-            経験値：<strong>${student.xp} XP</strong>
-          </div>
-
-          <div style="margin-top:16px;">
-            <div class="xp-label">
-              <span>次のレベルまで</span>
-              <span>${currentLevelXP} / ${xpNeededForCurrentLevel(student.level)} XP</span>
-            </div>
-            <div class="xp-bar">
-              <div class="xp-fill" style="width:${progress}%;"></div>
-            </div>
-          </div>
-
-          <div class="subject-title">今日取り組んだ教科（複数選択可）</div>
-          <div id="subjectTabs" class="subject-tabs"></div>
-          <button id="saveSubjectsBtn" class="btn-primary" style="margin-top:12px;">保存</button>
-
-          <div style="margin-top:18px;">
-            <canvas id="radarChart" width="320" height="320"></canvas>
-          </div>
-        </div>
-      `;
-
-      document.body.appendChild(overlay);
-
-      const selected = new Set();
-      const tabWrap = overlay.querySelector("#subjectTabs");
-
-      SUBJECTS.forEach(subject => {
-        const btn = document.createElement("button");
-        btn.textContent = subject;
-        btn.className = "btn-secondary";
-        btn.style.padding = "8px 12px";
-
-        btn.onclick = () => {
-          if (selected.has(subject)) {
-            selected.delete(subject);
-            btn.className = "btn-secondary";
-          } else {
-            selected.add(subject);
-            btn.className = "btn-primary";
-          }
-        };
-
-        tabWrap.appendChild(btn);
-      });
-
-      const chartCanvas = overlay.querySelector("#radarChart");
-      drawRadarChart(chartCanvas, student);
-
-      overlay.querySelector("#saveSubjectsBtn").onclick = () => {
-        selected.forEach(subject => {
-          student.subjectStats[subject] += 1;
-        });
-        saveStudents();
-        drawRadarChart(chartCanvas, student);
-
-        tabWrap.querySelectorAll("button").forEach(btn => {
-          btn.className = "btn-secondary";
-        });
-        selected.clear();
-      };
-
-      overlay.addEventListener("click", e => {
-        if (e.target === overlay) overlay.remove();
-      });
-
-      setTimeout(() => {
-        if (document.body.contains(overlay)) overlay.remove();
-      }, 10000);
-    }
-
-    function addXP(studentId) {
-      const student = students.find(s => s.id === studentId);
-      if (!student) {
-        showToast("登録されていないQRです。");
-        return;
-      }
-
-      ensureStudentStats(student);
-
-      const today = todayString();
-      if (student.lastScanDate === today) {
-        showToast(`${student.name} は今日はすでに読み取り済みです。`);
-        return;
-      }
-
-      const beforeLevel = student.level;
-
-      student.xp += 5;
-      student.level = calcLevel(student.xp);
-      student.title = getTitleByLevel(student.level);
-      student.lastScanDate = today;
-      student.history.unshift({
-        dateTime: nowString(),
-        action: "QR提出",
-        gainedXP: 5,
-        totalXP: student.xp,
-        level: student.level,
-        title: student.title
-      });
-
-      saveStudents();
-      render();
-
-      if (student.level > beforeLevel) {
-        showLevelUp(student);
-        setTimeout(() => showStudentStatus(student), 2600);
-      } else {
-        showStudentStatus(student);
-      }
-    }
-
-    function render() {
-      const list = document.getElementById("studentList");
-      list.innerHTML = "";
-
-      if (getMode() !== "teacher") return;
-
-      if (students.length === 0) {
-        list.innerHTML = `<div class="small" style="color:#fff;">まだ生徒が登録されていません。</div>`;
-        return;
-      }
-
-      students.forEach(student => {
-        ensureStudentStats(student);
-
-        const title = getTitleByLevel(student.level);
-        const imageUrl = getImageByTitle(title);
-        const progress = xpProgressPercent(student.xp);
-        const currentLevelXP = xpIntoCurrentLevel(student.xp);
-        const scannedToday = student.lastScanDate === todayString() ? "済" : "未";
-
-        const historyHtml = student.history.length === 0
-          ? `<div class="small">まだ履歴はありません。</div>`
-          : `<ul class="history-list">${
-              student.history.slice(0, 20).map(h =>
-                `<li>${h.dateTime} / ${h.action} / +${h.gainedXP}XP / 合計${h.totalXP}XP / Lv.${h.level} / ${h.title}</li>`
-              ).join("")
-            }</ul>`;
-
-        const card = document.createElement("div");
-        card.className = "student-card";
-        card.innerHTML = `
-          <div class="student-top">
-            <img class="student-image" src="${imageUrl}" alt="${title}">
-            <div>
-              <h3 class="student-name">${student.name}</h3>
-              <div class="badge">${title}</div>
-              <div class="stat"><strong>レベル:</strong> Lv.${student.level}</div>
-              <div class="stat"><strong>総経験値:</strong> ${student.xp} XP</div>
-              <div class="stat"><strong>本日の読み取り:</strong> ${scannedToday}</div>
-              <div class="stat"><strong>最終読み取り日:</strong> ${student.lastScanDate || "なし"}</div>
-
-              <div class="xp-wrap">
-                <div class="xp-label">
-                  <span>次のレベルまで</span>
-                  <span>${currentLevelXP} / ${xpNeededForCurrentLevel(student.level)} XP</span>
-                </div>
-                <div class="xp-bar">
-                  <div class="xp-fill" style="width:${progress}%;"></div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="subblock">
-            <div class="small">この生徒専用QRコード</div>
-            <canvas id="qr-${student.id}"></canvas>
-          </div>
-
-          <div class="subblock">
-            <div class="history-title">提出履歴</div>
-            ${historyHtml}
-          </div>
-
-          <div class="subblock">
-            <button class="btn-danger" onclick="deleteStudent('${student.id}')">削除</button>
-          </div>
-        `;
-
-        list.appendChild(card);
-
-        const canvas = document.getElementById(`qr-${student.id}`);
-        QRCode.toCanvas(canvas, student.id, { width: 138, margin: 1 }, function(error) {
-          if (error) console.error(error);
-        });
-      });
-    }
-
-    function exportData() {
-      const dataStr = JSON.stringify(students, null, 2);
-      const blob = new Blob([dataStr], { type: "application/json" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `submit_rpg_${getTeacherKey()}.json`;
-      a.click();
-      URL.revokeObjectURL(url);
-    }
-
-    function resetAllData() {
-      if (!confirm(`先生キー「${getTeacherKey()}」のデータを本当に全削除しますか？`)) return;
-      localStorage.removeItem(STORAGE_KEY);
-      students = [];
-      render();
-      showToast("この先生キーのデータを削除しました。");
-    }
-
-    applyModeUI();
-    render();
-
-    let scannerStarted = false;
-    const qrScanner = new Html5Qrcode("reader");
-
-    async function startScanner() {
-      if (scannerStarted) return;
-      scannerStarted = true;
-
-      try {
-        await qrScanner.start(
-          { facingMode: "environment" },
-          { fps: 10, qrbox: 250 },
-          decodedText => {
-            addXP(decodedText);
-          },
-          () => {}
-        );
-      } catch (err) {
-        console.error(err);
-        showToast("カメラを起動できませんでした。HTTPS環境または対応ブラウザで開いてください。");
-      }
-    }
-
-    startScanner();
-  </script>
 </body>
 </html>
