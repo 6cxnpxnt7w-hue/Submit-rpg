@@ -121,6 +121,10 @@
       padding: 10px 6px; border-bottom: 1px solid #e5edf7;
     }
     .student-item:last-child { border-bottom: none; }
+    .student-item.selectable { cursor: pointer; border-radius: 10px; padding-inline: 10px; }
+    .student-item.selectable:hover { background: #eef4ff; }
+    .student-item.selectable.active { background: #dbeafe; border: 1px solid #93c5fd; }
+
     .small { font-size: 12px; color: var(--muted); }
     .muted-badge, .ok-badge, .ng-badge, .warn-badge {
       display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 800; border-radius: 999px; padding: 6px 10px;
@@ -471,19 +475,41 @@
       <div class="grid">
         <section class="panel">
           <h2 class="section-title">3. 生徒名簿の登録とQR一括作成</h2>
-          <p class="sub">1行に1人ずつ <strong>生徒ID,名前</strong> の形で入力してください。</p>
-          <textarea id="rosterInput" rows="10" placeholder="2026001,山田 太郎&#10;2026002,佐藤 花子&#10;2026003,田中 一郎"></textarea>
-          <div class="toolbar">
-            <button class="btn-primary" id="saveRosterBtn">名簿を保存</button>
-            <button class="btn-secondary" id="loadSampleBtn">サンプルを入れる</button>
-            <button class="btn-secondary" id="downloadDataBtn">データをJSON保存</button>
-            <button class="btn-success" id="printQrBtn">QRをまとめて印刷</button>
+          <p class="sub">フォーム入力で1人ずつ登録できます。まとめて入力したい場合は下の一括入力欄も使えます。</p>
+
+          <div class="grid-equal">
+            <div>
+              <div class="form-row">
+                <input id="studentIdInput" type="text" placeholder="生徒ID（例：2026001）" />
+                <input id="studentNameInput" type="text" placeholder="名前（例：山田 太郎）" />
+              </div>
+              <div class="toolbar">
+                <button class="btn-primary" id="addStudentBtn">生徒を追加</button>
+                <button class="btn-secondary" id="updateStudentBtn">選択中の生徒を更新</button>
+                <button class="btn-danger" id="deleteStudentBtn">選択中の生徒を削除</button>
+                <button class="btn-secondary" id="clearStudentFormBtn">入力をクリア</button>
+              </div>
+              <div class="note">一覧から生徒を選ぶと、上のフォームに自動で読み込まれます。</div>
+              <div class="list-box" id="rosterManagerList" style="margin-top:12px;"></div>
+            </div>
+
+            <div>
+              <div class="note" style="margin-bottom:8px;">一括入力したい場合は、1行に1人ずつ <strong>生徒ID,名前</strong> の形で入力してください。</div>
+              <textarea id="rosterInput" rows="10" placeholder="2026001,山田 太郎&#10;2026002,佐藤 花子&#10;2026003,田中 一郎"></textarea>
+              <div class="toolbar">
+                <button class="btn-primary" id="saveRosterBtn">一括で名簿を保存</button>
+                <button class="btn-secondary" id="loadSampleBtn">サンプルを入れる</button>
+                <button class="btn-secondary" id="downloadDataBtn">データをJSON保存</button>
+                <button class="btn-success" id="printQrBtn">QRをまとめて印刷</button>
+              </div>
+              <div class="note">
+                レベルは <strong>20経験値ごとに1アップ</strong>、1回の提出で <strong>+5経験値</strong>。<br>
+                同じ生徒は <strong>1日1回まで</strong> 提出を記録します。<br>
+                同じURLでも、先生キーを変えればデータが分かれます。
+              </div>
+            </div>
           </div>
-          <div class="note">
-            レベルは <strong>20経験値ごとに1アップ</strong>、1回の提出で <strong>+5経験値</strong>。<br>
-            同じ生徒は <strong>1日1回まで</strong> 提出を記録します。<br>
-            同じURLでも、先生キーを変えればデータが分かれます。
-          </div>
+
           <div id="qrCards" class="qr-list"></div>
         </section>
 
@@ -543,6 +569,7 @@
     let lastScanLock = "";
     let hideResultTimer = null;
     let currentScreen = localStorage.getItem(`${STORAGE_PREFIX}_screenMode`) || 'student';
+    let selectedRosterId = "";
 
     function todayKey() {
       const now = new Date();
@@ -624,6 +651,13 @@
     function renderChart() {
       const ctx = el("radarChart");
       if (!ctx) return;
+      if (typeof Chart === "undefined") {
+        const note = document.createElement("div");
+        note.className = "note";
+        note.textContent = "グラフを読み込めなかったため、ここでは表示していません。";
+        ctx.replaceWith(note);
+        return;
+      }
       if (chart) chart.destroy();
       chart = new Chart(ctx, {
         type: "radar",
@@ -852,26 +886,166 @@
       el("reader").innerHTML = "";
     }
 
+
+    function syncRosterTextarea() {
+      const entries = Object.entries(state.roster).sort((a, b) => String(a[0]).localeCompare(String(b[0]), 'ja'));
+      el("rosterInput").value = entries.map(([id, name]) => `${id},${name}`).join("\n");
+    }
+
+    function clearStudentForm() {
+      selectedRosterId = "";
+      el("studentIdInput").value = "";
+      el("studentNameInput").value = "";
+      renderRosterManagerList();
+    }
+
+    function fillStudentForm(id) {
+      selectedRosterId = id;
+      el("studentIdInput").value = id;
+      el("studentNameInput").value = state.roster[id] || "";
+      renderRosterManagerList();
+    }
+
+    function renderRosterManagerList() {
+      const wrap = el("rosterManagerList");
+      const entries = Object.entries(state.roster).sort((a, b) => String(a[0]).localeCompare(String(b[0]), 'ja'));
+      if (!entries.length) {
+        wrap.innerHTML = `<div class="note">まだ生徒が登録されていません。</div>`;
+        return;
+      }
+      wrap.innerHTML = entries.map(([id, name]) => `
+        <div class="student-item selectable ${selectedRosterId === id ? 'active' : ''}" data-roster-id="${id}">
+          <div>
+            <div style="font-weight:800;">${name}</div>
+            <div class="small">${id}</div>
+          </div>
+          <div class="muted-badge">選択して編集</div>
+        </div>
+      `).join("");
+
+      wrap.querySelectorAll("[data-roster-id]").forEach(node => {
+        node.addEventListener("click", () => fillStudentForm(node.dataset.rosterId));
+      });
+    }
+
+    function addStudentFromForm() {
+      const id = el("studentIdInput").value.trim();
+      const name = el("studentNameInput").value.trim();
+      if (!id || !name) {
+        alert("生徒IDと名前の両方を入力してください。");
+        return;
+      }
+      if (state.roster[id]) {
+        alert("その生徒IDはすでに登録されています。更新したい場合は一覧から選んでください。");
+        return;
+      }
+      state.roster[id] = name;
+      const student = ensureStudentRecord(id);
+      student.name = name;
+      saveState();
+      clearStudentForm();
+      refreshAll();
+      alert("生徒を追加しました。");
+    }
+
+    function updateStudentFromForm() {
+      if (!selectedRosterId) {
+        alert("先に一覧から更新したい生徒を選んでください。");
+        return;
+      }
+      const nextId = el("studentIdInput").value.trim();
+      const nextName = el("studentNameInput").value.trim();
+      if (!nextId || !nextName) {
+        alert("生徒IDと名前の両方を入力してください。");
+        return;
+      }
+      if (nextId !== selectedRosterId && state.roster[nextId]) {
+        alert("変更後の生徒IDはすでに使われています。");
+        return;
+      }
+
+      const existingStudent = state.students[selectedRosterId];
+      delete state.roster[selectedRosterId];
+
+      if (existingStudent) {
+        state.students[nextId] = existingStudent;
+        state.students[nextId].id = nextId;
+        state.students[nextId].name = nextName;
+        if (nextId !== selectedRosterId) delete state.students[selectedRosterId];
+      }
+
+      state.roster[nextId] = nextName;
+      ensureStudentRecord(nextId).name = nextName;
+
+      state.history.forEach(h => {
+        if (h.studentId === selectedRosterId) {
+          h.studentId = nextId;
+          h.studentName = nextName;
+        }
+      });
+
+      saveState();
+      selectedRosterId = nextId;
+      refreshAll();
+      fillStudentForm(nextId);
+      alert("生徒情報を更新しました。");
+    }
+
+    function deleteStudentFromForm() {
+      if (!selectedRosterId) {
+        alert("先に一覧から削除したい生徒を選んでください。");
+        return;
+      }
+      const name = state.roster[selectedRosterId] || selectedRosterId;
+      if (!confirm(`${name} を名簿から削除します。よろしいですか？\n過去の履歴は残ります。`)) return;
+
+      delete state.roster[selectedRosterId];
+      delete state.students[selectedRosterId];
+      saveState();
+      clearStudentForm();
+      refreshAll();
+      alert("生徒を削除しました。");
+    }
+
     function parseRoster(text) {
-      const lines = text.split(/\r?\n/).map(v => v.trim()).filter(Boolean);
+      const lines = text
+        .replace(/^﻿/, "")
+        .split(/\r?\n/)
+        .map(v => v.trim())
+        .filter(Boolean);
+
       const roster = {};
       lines.forEach(line => {
-        const [id, ...rest] = line.split(",");
-        if (!id || !rest.length) return;
-        roster[id.trim()] = rest.join(",").trim();
+        const normalized = line.replace(/　/g, " ").trim();
+        const parts = normalized.includes(",")
+          ? normalized.split(",")
+          : normalized.includes("，")
+            ? normalized.split("，")
+            : normalized.split(/\t+/);
+
+        const id = (parts.shift() || "").trim();
+        const name = parts.join(",").trim();
+        if (!id || !name) return;
+        roster[id] = name;
       });
       return roster;
     }
 
     function saveRoster() {
       const roster = parseRoster(el("rosterInput").value);
+      if (!Object.keys(roster).length) {
+        alert("名簿を読み取れませんでした。1行に1人ずつ『生徒ID,名前』の形で入力してください。全角カンマにも対応しています。");
+        return;
+      }
       state.roster = roster;
       Object.keys(roster).forEach(id => {
         const student = ensureStudentRecord(id);
         student.name = roster[id];
       });
+      selectedRosterId = "";
       saveState();
       refreshAll();
+      syncRosterTextarea();
       alert("名簿を保存しました。QRコードも更新しました。");
     }
 
@@ -1016,7 +1190,7 @@
     function refreshAll(save = true) {
       if (save) saveState();
       el("teacherKey").value = teacherKey;
-      el("rosterInput").value = Object.entries(state.roster).map(([id, name]) => `${id},${name}`).join("\n");
+      syncRosterTextarea();
       renderSummary();
       renderHistory();
       renderChart();
@@ -1024,6 +1198,7 @@
       renderManualStudentSelect();
       renderUnsubmittedList();
       renderLastSuccessInfo();
+      renderRosterManagerList();
     }
 
     function bindEvents() {
@@ -1034,6 +1209,10 @@
       el("saveRosterBtn").addEventListener("click", saveRoster);
       el("loadSampleBtn").addEventListener("click", loadSample);
       el("downloadDataBtn").addEventListener("click", downloadJson);
+      el("addStudentBtn").addEventListener("click", addStudentFromForm);
+      el("updateStudentBtn").addEventListener("click", updateStudentFromForm);
+      el("deleteStudentBtn").addEventListener("click", deleteStudentFromForm);
+      el("clearStudentFormBtn").addEventListener("click", clearStudentForm);
       el("exportCsvBtn").addEventListener("click", exportCsv);
       el("clearHistoryBtn").addEventListener("click", clearHistory);
       el("saveTeacherKeyBtn").addEventListener("click", changeTeacherKey);
