@@ -3,187 +3,197 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>提出RPG</title>
+<title>提出RPG 完成版</title>
 
-<script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
 <script src="https://unpkg.com/html5-qrcode"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
 
 <style>
 body{
-  font-family:sans-serif;
-  background:#0f172a;
-  color:white;
-  padding:20px;
+    margin:0;
+    font-family:sans-serif;
+    background:linear-gradient(180deg,#0f172a,#1e293b);
+    color:white;
+    padding:20px;
 }
 .card{
-  background:#1e293b;
-  padding:20px;
-  border-radius:20px;
-  margin-bottom:20px;
+    background:rgba(255,255,255,0.1);
+    padding:20px;
+    border-radius:20px;
+    margin-bottom:20px;
 }
 button{
-  padding:10px 15px;
-  border:none;
-  border-radius:10px;
-  background:#2563eb;
-  color:white;
-  margin:5px;
+    padding:10px 15px;
+    border:none;
+    border-radius:10px;
+    margin:5px;
+    background:#3b82f6;
+    color:white;
 }
 input{
-  padding:10px;
-  border-radius:10px;
-  border:none;
+    padding:10px;
+    border-radius:10px;
+    border:none;
 }
-img{
-  width:180px;
-  border-radius:20px;
+.student-card{
+    border:1px solid rgba(255,255,255,0.2);
+    border-radius:20px;
+    padding:20px;
+    margin:20px 0;
+}
+.rank-img{
+    width:180px;
+    border-radius:20px;
 }
 </style>
 </head>
 <body>
 
+<h1>提出RPG 完成版</h1>
+
 <div class="card">
-  <h1>提出RPG</h1>
-  <input id="studentName" placeholder="生徒名">
-  <button onclick="addStudent()">追加</button>
+    <h2>生徒登録</h2>
+    <input id="studentName" placeholder="生徒名">
+    <button onclick="addStudent()">追加</button>
 </div>
 
 <div class="card">
-  <h2>QR読み取り</h2>
-  <div id="reader" style="width:300px"></div>
+    <h2>QR読み取り</h2>
+    <div id="reader" style="width:300px"></div>
 </div>
 
 <div class="card">
-  <h2>生徒一覧</h2>
-  <div id="studentList"></div>
+    <h2>生徒一覧</h2>
+    <div id="studentList"></div>
 </div>
 
 <script>
-const images = {
-  villager: "https://i.imgur.com/3VesM2P.jpeg",
-  adventurer: "https://i.imgur.com/GQwA5bP.jpeg",
-  warrior: "https://i.imgur.com/WQh0q3g.jpeg",
-  hero: "https://i.imgur.com/x5qY6hV.jpeg",
-  sage: "https://i.imgur.com/4rA7kJd.jpeg",
-  legend: "https://i.imgur.com/k0kqTlf.jpeg"
+const teacherKey = new URLSearchParams(location.search).get("teacher") || "default";
+const STORAGE_KEY = "submit_rpg_" + teacherKey;
+
+const rankImages = {
+    "村人":"https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=400",
+    "冒険者":"https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=400",
+    "戦士":"https://images.unsplash.com/photo-1517841905240-472988babdf9?w=400",
+    "勇者":"https://images.unsplash.com/photo-1518770660439-4636190af475?w=400",
+    "賢者":"https://images.unsplash.com/photo-1502082553048-f009c37129b9?w=400",
+    "伝説の勇者":"https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?w=400"
 };
 
-let students = JSON.parse(localStorage.getItem("students") || "[]");
+let students = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
 
-function titleByLevel(level){
-  if(level>=10) return ["伝説の勇者",images.legend];
-  if(level>=8) return ["賢者",images.sage];
-  if(level>=6) return ["勇者",images.hero];
-  if(level>=4) return ["戦士",images.warrior];
-  if(level>=2) return ["冒険者",images.adventurer];
-  return ["村人",images.villager];
+function saveData(){
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(students));
 }
 
-function save(){
-  localStorage.setItem("students",JSON.stringify(students));
+function getRank(level){
+    if(level >= 10) return "伝説の勇者";
+    if(level >= 8) return "賢者";
+    if(level >= 6) return "勇者";
+    if(level >= 4) return "戦士";
+    if(level >= 2) return "冒険者";
+    return "村人";
 }
 
 function addStudent(){
-  const name=document.getElementById("studentName").value;
-  const id=crypto.randomUUID();
+    const name = document.getElementById("studentName").value;
+    if(!name) return;
 
-  students.push({
-    id,
-    name,
-    xp:0,
-    level:1,
-    lastScan:"",
-    subjects:{
-      数学:0,
-      理科:0,
-      社会:0,
-      英語:0,
-      国語:0,
-      その他:0
-    }
-  });
+    students.push({
+        id: crypto.randomUUID(),
+        name,
+        xp:0,
+        level:1,
+        subjects:{
+            数学:0,
+            理科:0,
+            社会:0,
+            英語:0,
+            国語:0,
+            その他:0
+        }
+    });
 
-  save();
-  render();
+    saveData();
+    renderStudents();
 }
 
 function addXP(id){
-  const s=students.find(x=>x.id===id);
-  const today=new Date().toDateString();
-
-  if(s.lastScan===today){
-    alert("今日は読み取り済み");
-    return;
-  }
-
-  s.xp+=5;
-  s.level=Math.floor(s.xp/20)+1;
-  s.lastScan=today;
-
-  save();
-  render();
-  showStatus(s);
+    const student = students.find(s=>s.id===id);
+    student.xp += 5;
+    student.level = Math.floor(student.xp/20)+1;
+    saveData();
+    renderStudents();
+    showLevelScreen(student);
 }
 
-function showStatus(student){
-  const [title,img]=titleByLevel(student.level);
+function showLevelScreen(student){
+    const rank = getRank(student.level);
 
-  const div=document.createElement("div");
-  div.style.position="fixed";
-  div.style.inset="0";
-  div.style.background="rgba(0,0,0,0.8)";
-  div.style.display="flex";
-  div.style.alignItems="center";
-  div.style.justifyContent="center";
-  div.innerHTML=`
-    <div style="background:#1e293b;padding:30px;border-radius:20px;text-align:center;">
-      <img src="${img}">
-      <h2>${student.name}</h2>
-      <h3>Lv.${student.level}</h3>
-      <h3>${title}</h3>
-    </div>
-  `;
-  document.body.appendChild(div);
+    const div = document.createElement("div");
+    div.style.position="fixed";
+    div.style.inset="0";
+    div.style.background="rgba(0,0,0,0.9)";
+    div.style.display="flex";
+    div.style.justifyContent="center";
+    div.style.alignItems="center";
 
-  setTimeout(()=>div.remove(),10000);
-}
-
-function render(){
-  const list=document.getElementById("studentList");
-  list.innerHTML="";
-
-  students.forEach(s=>{
-    const [title,img]=titleByLevel(s.level);
-
-    const div=document.createElement("div");
-    div.className="card";
     div.innerHTML=`
-      <img src="${img}">
-      <h3>${s.name}</h3>
-      <p>Lv.${s.level}</p>
-      <p>${title}</p>
-      <p>${s.xp} XP</p>
-      <canvas id="qr-${s.id}"></canvas>
+        <div style="text-align:center;">
+            <img src="${rankImages[rank]}" class="rank-img">
+            <h1>${student.name}</h1>
+            <h2>Lv.${student.level}</h2>
+            <h2>${rank}</h2>
+        </div>
     `;
 
-    list.appendChild(div);
+    document.body.appendChild(div);
 
-    QRCode.toCanvas(
-      document.getElementById(`qr-${s.id}`),
-      s.id,
-      {width:120}
-    );
-  });
+    setTimeout(()=>{
+        div.remove();
+    },10000);
 }
 
-render();
+function renderStudents(){
+    const list = document.getElementById("studentList");
+    list.innerHTML="";
 
-const scanner=new Html5Qrcode("reader");
+    students.forEach(student=>{
+        const rank = getRank(student.level);
+
+        const div = document.createElement("div");
+        div.className="student-card";
+
+        div.innerHTML=`
+            <img src="${rankImages[rank]}" class="rank-img"><br>
+            <h3>${student.name}</h3>
+            <p>Lv.${student.level}</p>
+            <p>${rank}</p>
+            <p>${student.xp} XP</p>
+            <canvas id="qr-${student.id}"></canvas>
+        `;
+
+        list.appendChild(div);
+
+        QRCode.toCanvas(
+            document.getElementById(`qr-${student.id}`),
+            student.id,
+            {width:120}
+        );
+    });
+}
+
+renderStudents();
+
+const scanner = new Html5Qrcode("reader");
+
 scanner.start(
-  {facingMode:"environment"},
-  {fps:10,qrbox:250},
-  text=>addXP(text)
+    { facingMode:"environment" },
+    { fps:10, qrbox:250 },
+    (decodedText)=>{
+        addXP(decodedText);
+    }
 );
 </script>
 
